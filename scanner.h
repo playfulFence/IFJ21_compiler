@@ -38,6 +38,7 @@ typedef enum tokenType
     TOKEN_NEQ,          // not equal token        (~=)
     TOKEN_L_BR,         // left bracket token     ("(")
     TOKEN_R_BR,         // right bracket token    (")")
+    TOKEN_EOF           // EOF token
 }tokenType_t;
 
 typedef struct tokenData
@@ -53,6 +54,18 @@ typedef struct token
     tokenData_t data;
 }token_t;
 
-token_t getToken(FILE *F);
+token_t getToken(FILE *f);
 
-#endif
+typedef struct dSElement {
+    int data;
+    struct dSElement *previousElement;
+    struct dSElement *nextElement;
+} *dSElementPtr;
+
+
+typedef struct {
+    dSElementPtr firstElement;
+    dSElementPtr nextElement
+} dString;
+
+#endif // __SCANNER_H__
