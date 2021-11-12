@@ -2,6 +2,7 @@
 #define __SCANNER_H__
 
 #include <stdio.h>
+#include "dynamic_string.h"
 
 typedef enum tokenType
 {
@@ -40,6 +41,39 @@ typedef enum tokenType
     TOKEN_R_BR,         // right bracket token    (")")
     TOKEN_EOF           // EOF token
 }tokenType_t;
+
+typedef enum fsmStates
+{
+    START_STATE,
+    EOF_STATE,
+    ID_OR_KW_STATE,
+    INT_STATE,
+    INT_DOT_STATE,
+    EXP_STATE,
+    EXP_PLUS_OR_MINUS_STATE,
+    EXP_NUMBER_STATE,
+    NUMBER_STATE,
+    STRING_STATE,
+    STRING_E_S_STATE,
+    STRING_END_STATE,
+    COLON_STATE,
+    COMMA_STATE,
+    STRLEN_STATE,
+    MULT_STATE,
+    DIV_STATE,
+    DIV_INT_STATE,
+    PLUS_STATE,
+    DOT_STATE,
+    PROBABLY_NOT_EQ_STATE,
+    LINE_COMMENT_STATE,
+    PROBABLY_BLOCK_COMMENT_STATE,
+    BLOCK_COMMENT_STATE,
+    BLOCK_COMMENT_END_STATE,
+    PROBABLY_EQ_STATE,
+    GREATER_OR_GREATER_OR_EQ_STATE,
+    LESS_OR_LESS_OR_EQ_STATE,
+    MINUS_OR_COMMENT_STATE
+}fsmState;
 
 typedef struct tokenData
 {
