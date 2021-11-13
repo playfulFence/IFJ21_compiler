@@ -43,7 +43,7 @@ void DynamicStringInsertLast(DynamicString *dynamicString, char symbol)
 char *DynamicStringToString(DynamicString *dynamicString)
 {   int size = dynamicString->size;
     int i = 0;
-    char string[size];
+    char *string = malloc(size*sizeof(char));
     SymbolPtr ephemera = dynamicString->firstSymbol;
     while(ephemera != NULL)
     {
@@ -52,7 +52,7 @@ char *DynamicStringToString(DynamicString *dynamicString)
         i++;
     }
     DynamicStringDispose(dynamicString);
-    return *string;
+    return string;
 }
 
 int DynamicStringToInt(DynamicString *dynamicString)

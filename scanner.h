@@ -44,25 +44,19 @@ typedef enum tokenType
 
 typedef enum fsmStates
 {
-    START_STATE,
-    EOF_STATE,
+    START_STATE, 
     ID_OR_KW_STATE,
+
     INT_STATE,
     INT_DOT_STATE,
     EXP_STATE,
     EXP_PLUS_OR_MINUS_STATE,
     EXP_NUMBER_STATE,
     NUMBER_STATE,
+
     STRING_STATE,
     STRING_E_S_STATE,
-    STRING_END_STATE,
-    COLON_STATE,
-    COMMA_STATE,
-    STRLEN_STATE,
-    MULT_STATE,
     DIV_STATE,
-    DIV_INT_STATE,
-    PLUS_STATE,
     DOT_STATE,
     PROBABLY_NOT_EQ_STATE,
     LINE_COMMENT_STATE,
@@ -89,17 +83,5 @@ typedef struct token
 }token_t;
 
 token_t getToken(FILE *f);
-
-typedef struct dSElement {
-    int data;
-    struct dSElement *previousElement;
-    struct dSElement *nextElement;
-} *dSElementPtr;
-
-
-typedef struct {
-    dSElementPtr firstElement;
-    dSElementPtr nextElement
-} dString;
 
 #endif // __SCANNER_H__
