@@ -2,7 +2,6 @@
 #define __SCANNER_H__
 
 #include <stdio.h>
-#include "dynamic_string.h"
 
 typedef enum tokenType
 {
@@ -18,6 +17,9 @@ typedef enum tokenType
     TOKEN_THEN,         // "then" keyword token
     TOKEN_ELSE,         // "else" keyword token
     TOKEN_END,          // "end" keyword token
+    TOKEN_NUM_KW,       // "number" keyword token
+    TOKEN_INT_KW,       // "integer" keyword token
+    TOKEN_STR_KW,    // "string" keyword token
     TOKEN_FUNC,         // function token
     TOKEN_GLOBAL,       // "global" token         (global)
     TOKEN_LOCAL,        // "local" token          (local)

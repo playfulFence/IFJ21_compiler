@@ -19,12 +19,12 @@ typedef struct
     //SymbolPtr activeSymbol;
 } DynamicString;
 
-void DynamicStringInit(DynamicString *);
-void DynamicStringDispose(DynamicString *);
-void DynamicStringInsertLast(DynamicString *, char);
-char *DynamicStringToString(DynamicString *);
-int DynamicStringToInt(DynamicString *);
-double DynamicStringToDouble(DynamicString *);
-double DynamicStringExpToDouble(DynamicString *);
+void DynamicStringInit(DynamicString * dynamicString);
+void DynamicStringDispose(DynamicString * dynamicString);
+void DynamicStringInsertLast(DynamicString * dynamicString, char symbol);
+char *DynamicStringToString(DynamicString * dynamicString);
+int DynamicStringToInt(DynamicString * dynamicString);
+double DynamicStringToDouble(DynamicString * dynamicString);
+double DynamicStringExpToDouble(DynamicString * dynamicString);
 
 #endif 

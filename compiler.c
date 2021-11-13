@@ -1,12 +1,20 @@
 #include "parser.h"
 #include "scanner.h"
+#include "htab.h"
 #include "dynamic_string.h"
+
+
 
 int main(int argc, char** argv)
 {
-    char *tokens[] = {"ID", ":", ",", "INT", "NUM", "STR", "WHILE", "DO", "IF", "THEN", "ELSE", "END", "FUNC", "GLOBAL", "LOCAL", "NIL", "REQUAIRE", "RETURN", "#", "+","-","*","/","//","..","<",">","<=",">=","==","=","~=","(",")","EOF"};
+    htab_t * symtable = htab_init(43969);
+
+    char *tokens[] = {"ID", ":", ",", "INT", "NUM", "STR", "WHILE", "DO", "IF", "THEN", "ELSE", "END","NUM_KW","INT_KW","STR_KW", "FUNC", "GLOBAL", "LOCAL", "NIL", "REQUAIRE", "RETURN", "#", "+","-","*","/","//","..","<",">","<=",">=","==","=","~=","(",")","EOF"};
     FILE* prog = openFile(argc, argv);
     token_t token;
+
+   // htab_t * symtable = htab_init(43969);
+
     while (1)
     {
         token = getToken(prog);

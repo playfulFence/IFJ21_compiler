@@ -6,6 +6,9 @@ void DynamicStringInit(DynamicString *dynamicString)
     dynamicString->lastSymbol = NULL;
     dynamicString->size = 0;
 }
+
+
+
 void DynamicStringDispose(DynamicString *dynamicString)
 {
     SymbolPtr ephemera;
@@ -18,8 +21,11 @@ void DynamicStringDispose(DynamicString *dynamicString)
     dynamicString->firstSymbol = NULL;
     dynamicString->lastSymbol = NULL;
     dynamicString->size = 0;
-    
+
 }
+
+
+
 void DynamicStringInsertLast(DynamicString *dynamicString, char symbol)
 {
     SymbolPtr ephemera = (SymbolPtr)malloc(sizeof(struct Symbol));
@@ -40,10 +46,15 @@ void DynamicStringInsertLast(DynamicString *dynamicString, char symbol)
     dynamicString->lastSymbol = ephemera;
     dynamicString->size++;
 }
+
+
+
 char *DynamicStringToString(DynamicString *dynamicString)
-{   int size = dynamicString->size;
+{
+    int size = dynamicString->size;
     int i = 0;
-    char *string = malloc(size*sizeof(char));
+    char *string = malloc(size*sizeof(char)); // +1 не точно!!!
+
     SymbolPtr ephemera = dynamicString->firstSymbol;
     while(ephemera != NULL)
     {
@@ -55,6 +66,8 @@ char *DynamicStringToString(DynamicString *dynamicString)
     return string;
 }
 
+
+
 int DynamicStringToInt(DynamicString *dynamicString)
 {
     char *string = DynamicStringToString(dynamicString);
@@ -62,12 +75,18 @@ int DynamicStringToInt(DynamicString *dynamicString)
     return number;
 }
 
+
+
+
 double DynamicStringToDouble(DynamicString *dynamicString)
 {
     char *string = DynamicStringToString(dynamicString);
     double number = strtod(string, NULL);
     return number;
 }
+
+
+
 
 double DynamicStringExpToDouble(DynamicString *dynamicString)
 {

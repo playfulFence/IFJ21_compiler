@@ -3,6 +3,10 @@
 #include <string.h>
 #include <ctype.h>
 #include "scanner.h"
+#include "dynamic_string.h"
+#include "htab.h"
+
+
 
 /**
  * @brief make new token
@@ -10,6 +14,29 @@
  * @param f is input file 
  * @return token_t, new token
  */
+
+tokenType_t keywordCheck(char* suspect)
+{
+    if(!strcmp(suspect, "do")) return TOKEN_DO;
+    else if (!strcmp(suspect, "global")) return TOKEN_GLOBAL;
+    else if (!strcmp(suspect, "number"))  return TOKEN_NUM_KW;
+    else if (!strcmp(suspect, "else")) return TOKEN_ELSE;
+    else if (!strcmp(suspect, "if")) return TOKEN_IF;
+    else if (!strcmp(suspect, "require")) return TOKEN_REQ;
+    else if (!strcmp(suspect, "end")) return TOKEN_END;
+    else if (!strcmp(suspect, "integer")) return TOKEN_INT_KW;
+    else if (!strcmp(suspect, "return")) return TOKEN_RET;
+    else if (!strcmp(suspect, "function")) return TOKEN_FUNC;
+    else if (!strcmp(suspect, "local")) return TOKEN_LOCAL;
+    else if (!strcmp(suspect, "string")) return TOKEN_STR_KW;
+    else if (!strcmp(suspect, "nil")) return TOKEN_NIL;
+    else if (!strcmp(suspect, "then")) return TOKEN_THEN;
+    else if (!strcmp(suspect, "while")) return TOKEN_WHILE;
+    else return 0;
+}
+
+
+
 token_t getToken(FILE *f)
 {
     // dynamic string variable
@@ -158,10 +185,6 @@ token_t getToken(FILE *f)
                     newToken.type = TOKEN_R_BR;
                     return newToken;
                 }
-                else
-                {
-                    
-                }
                 break;
             
             case ID_OR_KW_STATE:
@@ -178,8 +201,11 @@ token_t getToken(FILE *f)
                     currentState = START_STATE;
                     ungetc(symbol,f);
                     // create id token
-                    newToken.type = TOKEN_ID;
-                    newToken.data.tokenStringVal = DynamicStringToString(&dynamicString);
+                    //newToken.type = TOKEN_ID;
+                    char* tmp = DynamicStringToString(&dynamicString);
+                    newToken.data.tokenStringVal = tmp;
+                    free(tmp);
+                    newToken.type = keywordCheck(newToken.data.tokenStringVal) ? keywordCheck(newToken.data.tokenStringVal) : TOKEN_ID;
                     return newToken;
                 }
                 break;
