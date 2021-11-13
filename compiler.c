@@ -4,7 +4,7 @@
 
 int main(int argc, char** argv)
 {
-    char *tokens[] = {"ID", ";", ",", "INT", "NUM", "STR", "WHILE", "DO", "IF", "THEN", "ELSE", "END", "FUNC", "GLOBAL", "LOCAL", "NIL", "REQUAIRE", "RETURN", "#", "+","-","*","/","//","..","<",">","<=",">=","==","=","LB","RB","EOF"};
+    char *tokens[] = {"ID", ":", ",", "INT", "NUM", "STR", "WHILE", "DO", "IF", "THEN", "ELSE", "END", "FUNC", "GLOBAL", "LOCAL", "NIL", "REQUAIRE", "RETURN", "#", "+","-","*","/","//","..","<",">","<=",">=","==","=","~=","(",")","EOF"};
     FILE* prog = openFile(argc, argv);
     token_t token;
     while (1)

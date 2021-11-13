@@ -218,6 +218,7 @@ token_t getToken(FILE *f)
                     return newToken;
                 }
                 break;
+
             case INT_DOT_STATE:
                 if(isdigit(symbol))
                 {
@@ -231,6 +232,7 @@ token_t getToken(FILE *f)
                     //TODO - ERROR
                 }
                 break;
+
             case NUMBER_STATE:
                 if(isdigit(symbol))
                 {
@@ -258,6 +260,7 @@ token_t getToken(FILE *f)
                     return newToken;
                 }
                 break;
+
             case EXP_STATE:
                 if(symbol == '+' || symbol == '-')
                 {
@@ -278,6 +281,7 @@ token_t getToken(FILE *f)
                     //TODO - maybe ERROR idk...
                 }
                 break;
+
             case EXP_PLUS_OR_MINUS_STATE:
                 if(isdigit(symbol))
                 {
@@ -291,6 +295,7 @@ token_t getToken(FILE *f)
                     // TODO - ERROR
                 }
                 break;
+
             case EXP_NUMBER_STATE:
                 if(isdigit(symbol))
                 {
@@ -311,6 +316,7 @@ token_t getToken(FILE *f)
                     return newToken;
                 }
                 break;
+
             case STRING_STATE:
                 if(symbol == '\\')
                 {
@@ -332,6 +338,7 @@ token_t getToken(FILE *f)
                     currentState = STRING_STATE;
                 }
                 break;
+
             case STRING_E_S_STATE:
                 switch (symbol)
                 {
@@ -356,17 +363,65 @@ token_t getToken(FILE *f)
                     currentState = STRING_STATE;
                     break;
                 case '0':
-                    //TODO
+                    escape_sequence[0] = symbol;
+                    currentState = STRING_E_S_0_1_STATE;
                     break;
                 case '1':
-                    //TODO
+                    escape_sequence[0] = symbol;
+                    currentState = STRING_E_S_0_1_STATE;
                     break;
                 case '2':
-                    //TODO
+                    escape_sequence[0] = symbol;
+                    currentState = STRING_E_S_2_STATE;
                     break;
                 default:
                     break;
                 }
+                break;
+            
+            case STRING_E_S_0_1_STATE:
+                if(isdigit(symbol))
+                {
+                    escape_sequence[1] = symbol;
+                    symbol = getc(f);
+                    if(isdigit(symbol))
+                    {
+                        escape_sequence[2] = symbol;
+                        DynamicStringInsertLast(&dynamicString, atoi(escape_sequence));
+                        currentState = STRING_STATE;
+                    }
+                    else
+                    {
+                        // ERROR
+                    }
+                }
+                else
+                {
+                    //ERROR
+                }
+                break;
+            
+            case STRING_E_S_2_STATE:
+                if(symbol >= '0' && symbol <='5')
+                {
+                    escape_sequence[1] = symbol;
+                    symbol = getc(f);
+                    if(symbol >= '0' && symbol <='5')
+                    {
+                        escape_sequence[2] = symbol;
+                        DynamicStringInsertLast(&dynamicString, atoi(escape_sequence));
+                        currentState = STRING_STATE;
+                    }
+                    else
+                    {
+                        // ERROR
+                    }
+                }
+                else
+                {
+                    // ERROR
+                }
+                break;
 
             case DIV_STATE:
                 if(symbol == '/')
@@ -387,6 +442,8 @@ token_t getToken(FILE *f)
                     newToken.type = TOKEN_S_BS;
                     return newToken;
                 }
+                break;
+
             case PROBABLY_NOT_EQ_STATE:
                 if(symbol == '=')
                 {
@@ -401,6 +458,7 @@ token_t getToken(FILE *f)
                     //TODO ERROR
                 }
                 break;
+
             case PROBABLY_EQ_STATE:
                 if(symbol == '=')
                 {
@@ -412,9 +470,13 @@ token_t getToken(FILE *f)
                 }
                 else
                 {
-                    //TODO - ERROR
+                    ungetc(symbol,f);
+                    currentState = START_STATE;
+                    newToken.type = TOKEN_ASSIGNMENT;
+                    return newToken;
                 }
                 break;
+
             case GREATER_OR_GREATER_OR_EQ_STATE:
                 if(symbol == '=')
                 {
@@ -435,6 +497,7 @@ token_t getToken(FILE *f)
                     return newToken;
                 }
                 break;
+
             case LESS_OR_LESS_OR_EQ_STATE:
                 if(symbol == '=')
                 {
@@ -455,6 +518,7 @@ token_t getToken(FILE *f)
                     return newToken;
                 }
                 break;
+
             case DOT_STATE:
                 if(symbol == '.')
                 {
@@ -468,9 +532,12 @@ token_t getToken(FILE *f)
                 {
                     //TODO - ERROR
                 }
+                break;
+
             case MINUS_OR_COMMENT_STATE:
                 if(symbol == '-')
                 {
+                    // change state to LINE_COMMENT_STATE
                     currentState = LINE_COMMENT_STATE;
                 }
                 else
@@ -484,47 +551,60 @@ token_t getToken(FILE *f)
                     return newToken;
                 }
                 break;
+
             case LINE_COMMENT_STATE:
                 if(symbol == '[')
                 {
+                    // channge state to PROBABLY_BLOCK_COMMENT_STATE
                     currentState = PROBABLY_BLOCK_COMMENT_STATE;
                 }
                 else if (symbol == '\n' || symbol == '\r')
                 {
+                    // change state to START_STATE
                     currentState = START_STATE;
                 }
                 else
                 {
+                    // change state to LINE_COMMENT_STATE
                     currentState = LINE_COMMENT_STATE;
                 }
                 break;
+
             case PROBABLY_BLOCK_COMMENT_STATE:
                 if(symbol == '[')
                 {
+                    // change state to BLOCK_COMMENT_STATE
                     currentState = BLOCK_COMMENT_STATE;
                 }
                 else
                 {
+                    // change state to LINE_COMMENT_STATE
                     currentState = LINE_COMMENT_STATE;
                 }
                 break;
+
             case BLOCK_COMMENT_STATE:
                 if(symbol == ']')
                 {
+                    // change state to BLOCK_COMMENT_END_STATE
                     currentState = BLOCK_COMMENT_END_STATE;
                 }
                 else
                 {
+                    // change state to BLOCK_COMMENT_STATE
                     currentState = BLOCK_COMMENT_STATE;
                 }
                 break;
+
             case BLOCK_COMMENT_END_STATE:
                 if(symbol == ']')
                 {
+                    // change state to START_STATE
                     currentState = START_STATE;
                 }
                 else
                 {
+                    // change state to BLOCK_COMMENT_STATE
                     currentState = BLOCK_COMMENT_STATE;
                 }
                 break;

@@ -1,26 +1,29 @@
+-- Program 2: Vypocet faktorialu (rekurzivne)
 require "ifj21"
 
-global g : function (integer) : integer  -- deklarace funkce
-
-function f(x : integer) : integer
-  if x < 10then return x-1
+function factorial(n : integer) : integer
+  local n1 : integer = n - 1
+  if n < 2 then
+    return 1
   else
-    x = x - 1
-    write("calling g with ", x, "\n")
-    local res : integer = g(x)
-    return res
+    local tmp : integer = factorial(n1)
+    return n * tmp
   end
 end
 
-function g(x : integer) : integer
-  if x > 0 then
-    write("calling f with ", x, "\n")
-    local x : integer = f(x)  -- pшekryji parametr x, ale aЮ po zavolбnн f(x) [Teal varuje!]
-    return x
-  else return 200 end  -- proи musн bэt pшed end bнlэ znak?
+function main()
+  write("Zadejte cislo pro vypocet faktorialu: ")
+  local a : integer = readi()
+  if a ~= nil then
+		if a < 0 then
+			write("Faktorial nejde spocitat!", "\n")
+		else
+			local vysl : integer = factorial(a)
+			write("Vysledek je ", vysl, "\n")
+    end
+  else
+     write("Chyba pri nacitani celeho cisla!\n")
+  end
 end
 
-function main()
-  local res : integer = g(10)
-  write("res: ", res, "\n")
-end main()  -- main() schovane za klicovym slovem end je ve skutecnosti volani teto uzivatelske funkce
+main()
