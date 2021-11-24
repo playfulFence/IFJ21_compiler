@@ -32,7 +32,7 @@ tokenType_t keywordCheck(char* suspect)
     else if (!strcmp(suspect, "nil")) return TOKEN_NIL;
     else if (!strcmp(suspect, "then")) return TOKEN_THEN;
     else if (!strcmp(suspect, "while")) return TOKEN_WHILE;
-    else return 0;
+    else return TOKEN_ID;
 }
 
 
@@ -204,8 +204,9 @@ token_t getToken(FILE *f)
                     //newToken.type = TOKEN_ID;
                     char* tmp = DynamicStringToString(&dynamicString);
                     newToken.data.tokenStringVal = tmp;
-                    free(tmp);
-                    newToken.type = keywordCheck(newToken.data.tokenStringVal) ? keywordCheck(newToken.data.tokenStringVal) : TOKEN_ID;
+
+                    newToken.type = keywordCheck(newToken.data.tokenStringVal);
+                    //free(tmp);
                     return newToken;
                 }
                 break;
