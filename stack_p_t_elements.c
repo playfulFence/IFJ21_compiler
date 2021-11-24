@@ -1,15 +1,15 @@
-#include "stack_p_t.h"
+#include "stack_p_t_elements.h"
 
 // Function to initialize the stack
-void initStackTokens(StackTokens* stack)
+void initStackPTElements(PTStack* stack)
 {
     stack->top = NULL;
 }
 // Function to push a new element to the stack 
-void pushToken(StackTokens* stack, token_t token)
+void pushPTElement(PTStack* stack, ptElement element)
 {
     ElementPtr newElement = malloc(sizeof(ElementPtr));
-    newElement->token = token;
+    newElement->element = element;
     newElement->nextElement = NULL;
     if(stack->top == NULL)
     {
@@ -22,7 +22,7 @@ void pushToken(StackTokens* stack, token_t token)
     }
 }
 // Function to pop an element from the stack
-void popToken(StackTokens* stack)
+void popPTElement(PTStack* stack)
 {
     if(stack->top->nextElement == NULL)
     {
@@ -37,7 +37,7 @@ void popToken(StackTokens* stack)
     }
 }
 // Function to destroy the stack 
-void destroyStackTokens(StackTokens* stack)
+void destroyPTStack(PTStack* stack)
 {
     while (stack->top != NULL)
     {

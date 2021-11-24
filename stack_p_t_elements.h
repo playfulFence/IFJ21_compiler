@@ -1,14 +1,14 @@
-#ifndef __STACK_P_T__
-#define __STACK_P_T__
+#ifndef __STACK_P_T_ELEMENTS__
+#define __STACK_P_T_ELEMENTS__
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "scanner.h"
+#include "bottom_up_analysis.h"
 
 // Element structure
 typedef struct Element
 {
-    token_t token;
+    ptElement element;
     struct Element *nextElement;
 } *ElementPtr;
 
@@ -16,17 +16,17 @@ typedef struct Element
 typedef struct
 {
     ElementPtr top; 
-}StackTokens;
+}PTStack;
 
 // Function to initialize the stack
-void initStackTokens(StackTokens*);
+void initStackPTElements(PTStack*);
 // Function to push a new element to the stack 
-void pushToken(StackTokens*, token_t);
+void pushPTElement(PTStack*, ptElement);
 // Function to pop an element from the stack
-void popToken(StackTokens*);
+void popPTElement(PTStack*);
 // Function to destroy the stack 
-void destroyStackTokens(StackTokens*);
+void destroyPTStack(PTStack*);
 
 
 
-#endif // __STACK_P_T__
+#endif // __STACK_P_T_ELEMENTS__
