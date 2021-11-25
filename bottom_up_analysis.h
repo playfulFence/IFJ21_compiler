@@ -54,29 +54,7 @@ typedef enum ptRulese
     ERROR        // Ooops, I'm sorry but I don't know this rule:(
 } ptRule;
 
-// elements that are used for bottom-up analysis
-typedef enum ptElements
-{
-    STRLEN,
-    MULT,
-    DIV,
-    INTDIV,
-    PLUS,
-    MINUS,
-    CONC,
-    LESS,
-    LEQ,
-    GREATER,
-    GEQ,
-    EQ,
-    NEQ,
-    LB,
-    RB,
-    I,
-    DOLLAR,
-    REDUCE_FLAG,
-    E
-} ptElement;
+
 
 // function that transform token type to precedece table element
 ptElement ptFromTokenToPTElement(tokenType_t);

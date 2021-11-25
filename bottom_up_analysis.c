@@ -1,8 +1,5 @@
-#include "scanner.h"
-#include "stack_p_t.h"
-#include "stack_p_t_elements.h"
-#include "dynamic_string.h"
-#include "tree.h"
+#include "bottom_up_analysis.h"
+
 
 ptElement ptFromTokenToPTElement(tokenType_t type)
 {
@@ -367,6 +364,7 @@ void reduceByTheRule(PTStack *ptElementsStack, DynamicString *ruleSequenceString
 
 void shiftElement(StackTokens *tokensStack, PTStack *ptElementsStack, token_t token, ptElement second)
 {
+    ptElement noneTerminal;
     switch (second)
     {
     case I:
@@ -387,7 +385,6 @@ void shiftElement(StackTokens *tokensStack, PTStack *ptElementsStack, token_t to
         break;
     default:
         // Get E from stack
-        ptElement noneTerminal;
         noneTerminal = popPTElement(ptElementsStack);
         // push reduce flag
         pushPTElement(ptElementsStack, REDUCE_FLAG);

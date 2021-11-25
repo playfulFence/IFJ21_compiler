@@ -3,13 +3,37 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "bottom_up_analysis.h"
+//#include "bottom_up_analysis.h"
+
+// elements that are used for bottom-up analysis
+typedef enum ptElements
+{
+    STRLEN,
+    MULT,
+    DIV,
+    INTDIV,
+    PLUS,
+    MINUS,
+    CONC,
+    LESS,
+    LEQ,
+    GREATER,
+    GEQ,
+    EQ,
+    NEQ,
+    LB,
+    RB,
+    I,
+    DOLLAR,
+    REDUCE_FLAG,
+    E
+} ptElement;
 
 // Element structure
-typedef struct ptElement
+typedef struct ptElementtt
 {
     ptElement element;
-    struct Element *nextElement;
+    struct ptElementtt *nextElement;
 } *ptElementPtr;
 
 // Stack structure

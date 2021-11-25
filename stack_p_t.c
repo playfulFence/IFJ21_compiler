@@ -41,6 +41,6 @@ void destroyStackTokens(StackTokens* stack)
 {
     while (stack->top != NULL)
     {
-        pop(stack);
+        popToken(stack);
     } 
 }
