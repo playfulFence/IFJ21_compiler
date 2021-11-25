@@ -1,4 +1,6 @@
 #include "stack_p_t_elements.h"
+#include "bottom_up_analysis.h"
+
 
 // Function to initialize the stack
 void initStackPTElements(PTStack* stack)

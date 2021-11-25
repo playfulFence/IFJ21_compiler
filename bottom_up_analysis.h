@@ -1,5 +1,5 @@
-#ifndef __BOTTOM_UP_ANALYSIS__
-#define  __BOTTOM_UP_ANALYSIS__
+#ifndef __BOTTOM_UP_ANALYSIS__H__
+#define  __BOTTOM_UP_ANALYSIS__H__
 
 #include "scanner.h"
 #include "stack_p_t.h"
@@ -81,7 +81,7 @@ typedef enum ptElements
 // function that transform token type to precedece table element
 ptElement ptFromTokenToPTElement(tokenType_t);
 
-void reduceByTheRule(PTStack*, DynamicString *, ptElement);
+void reduceByTheRule(PTStack *, DynamicString *, ptElement);
 
 // main function for bottom-up analysis 
 void bottomUpAnalysis(token_t);

@@ -1,5 +1,5 @@
-#ifndef __STACK_P_T_ELEMENTS__
-#define __STACK_P_T_ELEMENTS__
+#ifndef __STACK_P_T_ELEMENTS__H__
+#define __STACK_P_T_ELEMENTS__H__
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,4 +27,4 @@ ptElement popPTElement(PTStack*);
 // Function to destroy the stack 
 void destroyPTStack(PTStack*);
 
-#endif // __STACK_P_T_ELEMENTS__
+#endif // __STACK_P_T_ELEMENTS__H__

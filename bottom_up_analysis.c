@@ -1,5 +1,8 @@
-#include "bottom_up_analysis.h"
-
+#include "scanner.h"
+#include "stack_p_t.h"
+#include "stack_p_t_elements.h"
+#include "dynamic_string.h"
+#include "tree.h"
 
 ptElement ptFromTokenToPTElement(tokenType_t type)
 {
