@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "scanner.h"
 
 typedef enum treeNodeTypes
 {
@@ -34,8 +35,21 @@ typedef enum treeNodeTypes
     NODE_ELSE,
     NODE_WHILE,
     NODE_WHILE_DO,
-    NODE_RETURN
+    NODE_RETURN,
+    NODE_VAR_DEF,
+    NODE_ASSIGN
 }treeNodeType;
+
+typedef struct treeNodes
+{
+    treeNodeType type;
+    token_t token;
+    struct treeNodes **childrenNodes;
+} treeNode;
+
+void treeInit(treeNode**);
+void treeInsert(treeNode**, treeNodeType, token_t);
+
 
 
 #endif // __TREE_H__

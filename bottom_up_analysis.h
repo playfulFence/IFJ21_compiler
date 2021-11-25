@@ -5,6 +5,7 @@
 #include "stack_p_t.h"
 #include "stack_p_t_elements.h"
 #include "dynamic_string.h"
+#include "tree.h"
 
 // precedence table for bottom-up analysis 
 // 0 - no rule
@@ -80,10 +81,9 @@ typedef enum ptElements
 // function that transform token type to precedece table element
 ptElement ptFromTokenToPTElement(tokenType_t);
 
-// function that get index of precedence table element
-int ptGetIndex(ptElement);
+void reduceByTheRule(PTStack*, DynamicString *, ptElement);
 
 // main function for bottom-up analysis 
-token_t bottomUpAnalysis(token_t);
+void bottomUpAnalysis(token_t);
 
 #endif // __BOTTOM_UP_ANALYSIS__
