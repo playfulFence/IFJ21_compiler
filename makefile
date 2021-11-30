@@ -24,7 +24,7 @@ stack_p_t.o: stack_p_t.c stack_p_t.h
 tree.o: tree.c tree.h
 		$(CC) $(CFLAGS) -c tree.c -o tree.o
 clean:
-	rm *.o
+	rm *.o compiler
 run: all
 	./compiler
 

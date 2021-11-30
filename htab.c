@@ -79,7 +79,7 @@ void htab_clear(htab_t *t)
 
 /* Looking for element with key == "key" and returns pointer to it if was found.  *
  *  Otherwise, returns NULL                                                       */
-htab_pair_t * htab_find(htab_t * t, htab_key_t key)
+htab_data_t * htab_find(htab_t * t, htab_key_t key)
 {
     if(t == NULL)
     {
@@ -94,7 +94,7 @@ htab_pair_t * htab_find(htab_t * t, htab_key_t key)
     }
 
     /* If element (pair) with key == "key" will be found, this will be returned by function */
-    htab_pair_t * found;
+    htab_data_t * found;
 
     htab_item_t * buffer = t->itemPtrsArr[htab_hash_function(key) % t->arr_size];
 
@@ -159,7 +159,7 @@ bool htab_erase(htab_t * t, htab_key_t key)
 }
 
 
-void htab_for_each(const htab_t * t, void (*f)(htab_pair_t *data))
+void htab_for_each(const htab_t * t, void (*f)(htab_data_t *data))
 {
     if (t == NULL)
     {
@@ -223,7 +223,7 @@ htab_t *htab_move(size_t n, htab_t *from)
         htab_item_t *buffer = from->itemPtrsArr[i];
         while (buffer != NULL)
         {
-            htab_pair_t *newPair = htab_lookup_add(to,buffer->itemData->key); /* buffer of new "pairs" key-value in new table */
+            htab_data_t *newPair = htab_lookup_add(to,buffer->itemData->key); /* buffer of new "pairs" key-value in new table */
             if(newPair == NULL)
             {
                 fprintf(stderr, "%s ---> ERROR: Allocation of new pair failed\n", __func__);
@@ -241,7 +241,7 @@ htab_t *htab_move(size_t n, htab_t *from)
 
 /* If element with key == "key" already exists - function returns pointer to it *
  *  Otherwise, creates NEW element in hash-table with key == "key"              */
-htab_pair_t * htab_lookup_add(htab_t * t, htab_key_t key)
+htab_data_t * htab_lookup_add(htab_t * t, htab_key_t key)
 {
     if(t == NULL)
     {
@@ -257,13 +257,13 @@ htab_pair_t * htab_lookup_add(htab_t * t, htab_key_t key)
 
     /* Creating (so, allocating memory for) new element of hash-table */
     htab_item_t * new = malloc(sizeof(htab_item_t));
-    new->itemData = malloc(sizeof(htab_pair_t));
+    new->itemData = malloc(sizeof(htab_data_t));
     new->itemData->key = malloc(sizeof(char) * (strlen(key) + 1));
     strcpy((char*) new->itemData->key, key);
     new->itemData->varIntVal = 0;
     new->itemData->varNumVal = 0;
-    new->itemData->type = NULL;
-    new->itemData->datatype = NULL;
+    new->itemData->countOfArgs = 0;
+    new->itemData->countOfReturns = 0;
     new->itemData->funcParams = NULL;
     new->itemData->funcReturns = NULL;
 
@@ -319,5 +319,84 @@ size_t htab_size(const htab_t * t)
     }
 
     return t->size;
+}
+
+htab_list_t* initList()
+{
+    htab_list_t* list = malloc(sizeof(htab_list_t));
+    if(!list)
+    {
+        printf("%s ERROR: can't allocate hashtable list! Exit...", __func__);
+        exit(228); // TODO
+    }
+
+    list->first = NULL;
+
+    return list;
+}
+
+void insertFirst(htab_list_t* list, htab_list_item_t* item)
+{
+    if(!list || !item)
+    {
+        printf("%s ERROR: can't create first element of hashtable list! Exit...", __func__ );
+        exit(228); // TODO
+    }
+
+    if(!list->first)list->first = item;
+    else
+    {
+        item->next = list->first;
+        list->first = item;
+    }
+
+}
+
+void removeFirst(htab_list_t* list)
+{
+    if(!list)
+    {
+        printf("%s ERROR: list doesn't exist!", __func__ );
+        exit(228); // TODO
+    }
+
+    if(!list->first->next) free(list->first);
+    else
+    {
+        htab_list_item_t* thanosSnap = list->first;
+        list->first = list->first->next;
+        free(thanosSnap);
+    }
+}
+
+void freeList(htab_list_t* list)
+{
+    if(!list)
+    {
+        printf("%s ERROR: list doesn't exist!", __func__ );
+        exit(228); // TODO
+    }
+
+    while(list->first) removeFirst(list);
+
+    free(list);
+}
+
+htab_data_t* listSearch(htab_list_t* list, htab_key_t key)
+{
+    if(!list)
+    {
+        printf("%s ERROR: list doesn't exist!", __func__ );
+        exit(228); // TODO
+    }
+
+    htab_list_item_t* inspectorGadget = list->first;
+    while(inspectorGadget)
+    {
+        if(htab_find(inspectorGadget->symtable, key)) return htab_find(inspectorGadget->symtable, key);
+        inspectorGadget = inspectorGadget->next;
+    }
+
+    return NULL;
 }
 

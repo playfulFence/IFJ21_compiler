@@ -14,6 +14,7 @@ int main(int argc, char** argv)
     // call parser to make abastract syntax tree
     ast_node *ast = parseAST(symtable, prog);
 
+
     
     // ast_node *ast = make_new_node();
     // ast_node *child1 = make_new_node();

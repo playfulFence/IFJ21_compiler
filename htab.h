@@ -12,6 +12,25 @@ typedef struct htab htab_t;
 // Typy:
 typedef const char * htab_key_t;        // typ klíče
 
+
+typedef enum
+{
+    TYPE_STRING,
+    TYPE_INT,
+    TYPE_NUM,
+    TYPE_FUNC,
+    TYPE_NIL,
+    TYPE_VARIABLE
+}elementType_t;
+
+typedef enum
+{
+    DATATYPE_INT,
+    DATATYPE_NUM,
+    DATATYPE_STRING,
+    DATATYPE_NIL
+}variableDatatype_t;
+
 // Tabulka:
 struct htab
 {
@@ -22,22 +41,37 @@ struct htab
 
 
 // Dvojice dat v tabulce:
-typedef struct htab_pair {
-    htab_key_t    key;          //  name of variable/function
-    char* type;
-    char* datatype;
+typedef struct htab_data {
+    bool defineFlag;
+    bool declareFlag;
+    htab_key_t id;          //  name of variable/function
+    elementType_t type;
+    variableDatatype_t datatype;    // datatype of variable
     int varIntVal;
     double varNumVal;
-    char** funcParams;
-    char** funcReturns;
-} htab_pair_t;
+    int countOfArgs;
+    int countOfReturns;
+    struct htab_data* funcArgs;     // array of function arguments
+    struct htab_data* funcReturns;  // array of function return variables
+} htab_data_t;
 
 
 struct htab_item
 {
     htab_item_t* next;
-    htab_pair_t *itemData;
+    htab_data_t *itemData;
 };
+
+typedef struct htab_list_item // for "scope table"
+{
+    htab_t* symtable;
+    struct htab_list_item* next;
+}htab_list_item_t;
+
+typedef struct htab_list
+{
+    htab_list_item_t* first;
+}htab_list_t;
 
 
 
@@ -47,19 +81,28 @@ size_t htab_hash_function(htab_key_t str);
 
 // Funkce pro práci s tabulkou:
 htab_t *htab_init(size_t n);                    // konstruktor tabulky
-htab_t *htab_move(size_t n, htab_t *from);      // přesun dat do nové tabulky
+htab_t *htab_move(size_t n, htab_t *from);      // přesun dat do nové tabulky TODO mb delete
 size_t htab_size(const htab_t * t);             // počet záznamů v tabulce
 size_t htab_bucket_count(const htab_t * t);     // velikost pole
 
-htab_pair_t *htab_find(htab_t * t, htab_key_t key);  // hledání
-htab_pair_t *htab_lookup_add(htab_t * t, htab_key_t key);
+htab_data_t *htab_find(htab_t * t, htab_key_t key);  // hledání
+htab_data_t *htab_lookup_add(htab_t * t, htab_key_t key);
 
 bool htab_erase(htab_t * t, htab_key_t key);    // ruší zadaný záznam
 
 // for_each: projde všechny záznamy a zavolá na ně funkci f
-void htab_for_each(const htab_t * t, void (*f)(htab_pair_t *data));
+void htab_for_each(const htab_t * t, void (*f)(htab_data_t *data));
 
 void htab_clear(htab_t * t);    // ruší všechny záznamy
 void htab_free(htab_t * t);     // destruktor tabulky
+
+htab_list_t* initList();
+void insertFirst(htab_list_t*, htab_list_item_t*);
+
+void removeFirst(htab_list_t*);
+void freeList(htab_list_t*);
+
+htab_item_t* listSearch(htab_list_t*, htab_key_t);
+
 
 #endif // __HTAB_H__
