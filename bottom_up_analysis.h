@@ -12,7 +12,7 @@
 // 1 - >
 // 2 - < 
 // 3 - =
-int precedenceTable[17][17] =
+static int precedenceTable[17][17] =
 {         /*  #   *   /  //   +   -  ..   <  <=   >  >=  ==  ~=   (   )   i   $   */
 /* #  */    { 0 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 2 , 0 , 2 , 1 },
 /* *  */    { 2 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 2 , 1 , 2 , 1 },
@@ -62,6 +62,6 @@ ptElement ptFromTokenToPTElement(tokenType_t);
 void reduceByTheRule(PTStack *, DynamicString *, ptElement);
 
 // main function for bottom-up analysis 
-void bottomUpAnalysis(token_t);
+void bottomUpAnalysis(token_t, FILE *);
 
 #endif // __BOTTOM_UP_ANALYSIS__

@@ -1,4 +1,6 @@
 #include "bottom_up_analysis.h"
+#include "scanner.h"
+
 
 
 ptElement ptFromTokenToPTElement(tokenType_t type)
@@ -66,31 +68,41 @@ ptElement ptFromTokenToPTElement(tokenType_t type)
 
 void reduceByTheRule(PTStack *ptElementsStack, DynamicString *ruleSequenceString, ptElement first)
 {
+    printf("Rule first element: %d\n", first);
     ptElement noneTerminal;
     switch (first)
     {
     case I: // E --> id
+        printf("1\n");
         noneTerminal = popPTElement(ptElementsStack);
+        printf("Stack elemnt: %d\n", noneTerminal);
         if(noneTerminal == I)
         {
+            printf("2\n");
             noneTerminal = popPTElement(ptElementsStack);
             if(noneTerminal == REDUCE_FLAG)
             {
+                printf("3\n");
                 pushPTElement(ptElementsStack, E);
                 DynamicStringInsertLast(ruleSequenceString, '0');
             }
         }
         break;
     case STRLEN: // E --> #E
+        printf("hmmmmmmmmm\n");
         noneTerminal = popPTElement(ptElementsStack);
+        printf("hmmmmmmmmm\n");
         if(noneTerminal == E)
         {
+            printf("hmmmmmmmmm\n");
             noneTerminal = popPTElement(ptElementsStack);
             if(noneTerminal == STRLEN)
             {
+                printf("hmmmmmmmmm\n");
                 noneTerminal = popPTElement(ptElementsStack);
                 if(noneTerminal == REDUCE_FLAG)
                 {
+                    printf("hmmmmmmmmm\n");
                     pushPTElement(ptElementsStack, E);
                     DynamicStringInsertLast(ruleSequenceString, '1');
                 }
@@ -369,11 +381,16 @@ void shiftElement(StackTokens *tokensStack, PTStack *ptElementsStack, token_t to
     {
     case I:
         // Push reduce flag and  I, and also push token to token stack
+        printf("push I\n");
         pushPTElement(ptElementsStack, REDUCE_FLAG);
         pushPTElement(ptElementsStack, second);
         pushToken(tokensStack, token);
         break;
     case STRLEN:
+        printf("psuh strlen\n");
+        pushPTElement(ptElementsStack, REDUCE_FLAG);
+        pushPTElement(ptElementsStack, second);
+        break;
     case LB:
         // Push reduce flag and LB
         pushPTElement(ptElementsStack, REDUCE_FLAG);
@@ -396,7 +413,7 @@ void shiftElement(StackTokens *tokensStack, PTStack *ptElementsStack, token_t to
     }
 }
 
-void bottomUpAnalysis(token_t token)
+void bottomUpAnalysis(token_t token, FILE *f)
 {
     // initialize stack for tokens
     StackTokens tokensStack;
@@ -404,6 +421,11 @@ void bottomUpAnalysis(token_t token)
     // initialize stack for precedence table elements
     PTStack ptElementsStack;
     initStackPTElements(&ptElementsStack);
+
+    // pls help me
+    PTStack hope;
+    initStackPTElements(&hope);
+
     // initialize dynamic string for rule sequence 
     DynamicString ruleSequenceString;
     DynamicStringInit(&ruleSequenceString);
@@ -415,43 +437,58 @@ void bottomUpAnalysis(token_t token)
     ptElement previousElement;
     // push $ to the precedence table elements stack
     pushPTElement(&ptElementsStack, DOLLAR);
+
+    pushPTElement(&hope, DOLLAR);
+
     ptStackTopElement = DOLLAR;
     previousElement = DOLLAR;
+    nextElement = ptFromTokenToPTElement(token.type);
     while(1)
     {
-        nextElement = ptFromTokenToPTElement(token.type);
-        if(nextElement == DOLLAR)
+         printf("----previousElement: %d\n nextElement: %d\n stackTopElement: %d\n\n", previousElement, nextElement, ptStackTopElement);
+        if(nextElement == DOLLAR && ptStackTopElement == DOLLAR)
         {
             // end of expression, need to check if there is not error
             // we should have sequence of rules
             // go out from cycle and work with sequence and tree
             printf("END of EXPRESSION\n");
-            break;
+            char *strRule = DynamicStringToString(&ruleSequenceString);
+            printf("ruleSequence: %s\n", strRule);
+            exit(2);
         }
-        switch(precedenceTable[ptStackTopElement][nextElement])
+        if(precedenceTable[ptStackTopElement][nextElement] == 0)
         {
-            case 0: // no rule
-                printf("No rule\n");
-                break;
-            case 1: // reduce    // maybe we can detect errrors here
-                reduceByTheRule(&ptElementsStack, &ruleSequenceString, ptStackTopElement);
-                ptStackTopElement = previousElement;
-                shiftElement(&tokensStack, &ptElementsStack, token, nextElement);
-                previousElement = ptStackTopElement;
-                ptStackTopElement = nextElement;
-                break;
-            case 2: // shift
-                shiftElement(&tokensStack, &ptElementsStack, token, nextElement);
-                previousElement = ptStackTopElement;
-                ptStackTopElement = nextElement;
-                break;
-            case 3: // equal
-                shiftElement(&tokensStack, &ptElementsStack, token, nextElement);
-                previousElement = ptStackTopElement;
-                ptStackTopElement = nextElement;
-                break;
+            printf("No rule\n");
         }
+        else if(precedenceTable[ptStackTopElement][nextElement] == 1)
+        {
+            printf("reduce\n");
+            reduceByTheRule(&ptElementsStack, &ruleSequenceString, ptStackTopElement);
+            popPTElement(&hope);
+            ptStackTopElement = popPTElement(&hope);
+            pushPTElement(&hope, ptStackTopElement);
 
+            continue;
+        }
+        else if(precedenceTable[ptStackTopElement][nextElement] == 2)
+        {
+            printf("shift\n");
+            shiftElement(&tokensStack, &ptElementsStack, token, nextElement);
+            //
+            pushPTElement(&hope, nextElement);
+
+            ptStackTopElement = nextElement;
+        }
+        else if(precedenceTable[ptStackTopElement][nextElement] == 3)
+        {
+            shiftElement(&tokensStack, &ptElementsStack, token, nextElement);
+            //
+            pushPTElement(&hope, nextElement);
+
+            ptStackTopElement = nextElement;
+        }
+        token = getToken(f);
+        nextElement = ptFromTokenToPTElement(token.type);
     }
 
 }

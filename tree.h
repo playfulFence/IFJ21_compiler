@@ -23,6 +23,7 @@ typedef enum treeNodeTypes
     NODE_FUNC_DEF,  //
     NODE_FUNC_DEF_PARAM_LIST,
     NODE_FUNC_DEF_RETURN_DATATYPES_LIST,
+    NODE_FUNC_VOID_CALL,
     NODE_FUNC_CALL, 
     NODE_FUNC_CALL_PARAM_LIST,
     NODE_FUNC_DECL,
@@ -31,24 +32,50 @@ typedef enum treeNodeTypes
     NODE_STATEMENTS_LIST,
     NODE_STATEMENT,
     NODE_IF,
+    NODE_IF_CONDITION,
+    NODE_IF_THEN,
+    NODE_IF_ELSE,
     NODE_THEN,
     NODE_ELSE,
     NODE_WHILE,
+    NODE_WHILE_CONDITION,
     NODE_WHILE_DO,
     NODE_RETURN,
     NODE_VAR_DEF,
-    NODE_ASSIGN
+    NODE_SINGLE_ASSIGN,
+    NODE_IDS,
+    NODE_VALUES,
+    NODE_INT_ARG,
+    NODE_NUM_ARG,
+    NODE_STR_ARG,
+    NODE_ID_ARG,
+    NODE_MULTIPLE_ASSIGN,
+    NODE_PROG
 }treeNodeType;
 
-typedef struct treeNodes
+typedef struct abstract_syntax_tree_node
 {
-    treeNodeType type;
-    token_t token;
-    struct treeNodes **childrenNodes;
-} treeNode;
+    treeNodeType nodeType; // Type of the node
+    union Data             // Node's data
+    {
+        int intData;
+        double doubleData;
+        char *stringData;
+    }nodeData;
+    struct htab_item *hashTableItem; // Pointer to hashTable element
+    int childrenCounter; // Amount of children 
+    struct abstract_syntax_tree_node **childrenNodes; // List of children
+}ast_node;
 
-void treeInit(treeNode**);
-void treeInsert(treeNode**, treeNodeType, token_t);
+// creates new empty node 
+ast_node *make_new_node();
+
+void make_new_child(ast_node *parentNode, ast_node *newChild);
+
+void printAST(ast_node *ast);
+
+void print_nodes(ast_node *ast, int indent);
+
 
 
 
