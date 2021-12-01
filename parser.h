@@ -9,7 +9,7 @@
 
 FILE* openFile(int argc, char** argv);
 
-ast_node *parseAST(htab_t **symTable, FILE *f);
+ast_node *parseAST(htab_t *symTable, FILE *f);
 
 
 #endif // __PARSER_H__

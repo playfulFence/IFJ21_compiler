@@ -62,7 +62,7 @@ typedef struct abstract_syntax_tree_node
         double doubleData;
         char *stringData;
     }nodeData;
-    struct htab_item *hashTableItem; // Pointer to hashTable element
+    htab_data_t *hashTableItem; // Pointer to hashTable element
     int childrenCounter; // Amount of children 
     struct abstract_syntax_tree_node **childrenNodes; // List of children
 }ast_node;

@@ -588,8 +588,9 @@ void processFunctionDeclaration(ast_node *ast, htab_t **symTable, FILE *f, Dynam
 }
 
 // <functions> --> function id ( <list_of_parameters> ) : <list_of_datatypes> <list_of_statements> end
-void processFunctionDefinition(ast_node *ast, htab_t **symTable, FILE *f, DynamicString *dynamicString, StackTokens *tokenStack)
+void processFunctionDefinition(ast_node *ast, htab_list_t *hashTableList, FILE *f, DynamicString *dynamicString, StackTokens *tokenStack)
 {
+    htab_t *levelZeroTable = hashTableList->first;
     // make node for function definition  
     ast_node *funcDefNode = make_new_node();
     funcDefNode->nodeType = NODE_FUNC_DEF;
@@ -601,7 +602,8 @@ void processFunctionDefinition(ast_node *ast, htab_t **symTable, FILE *f, Dynami
         printf("ERROR function definition - no function ID\n");
     }
     funcDefNode->nodeData.stringData = token->data.tokenStringVal;
-    // TODO add function ID to symtable
+    funcDefNode->hashTableItem = htab_lookup_add(levelZeroTable, token->data.tokenStringVal);
+    // TODO check if there already is same function name 
     //
     //
     // get next token, should be (
@@ -640,7 +642,7 @@ void processFunctionDefinition(ast_node *ast, htab_t **symTable, FILE *f, Dynami
 }
 
 // <prog> --> require "ifj21" <functions> EOF
-void processProgramTemplate(ast_node *ast, htab_t **symTable, FILE *f, DynamicString *dynamicString, StackTokens *tokenStack)
+void processProgramTemplate(ast_node *ast, htab_list_t *hashTableList, FILE *f, DynamicString *dynamicString, StackTokens *tokenStack)
 {
     // check prolog
     token_t *token = getToken(f, dynamicString, tokenStack);
@@ -662,15 +664,15 @@ void processProgramTemplate(ast_node *ast, htab_t **symTable, FILE *f, DynamicSt
     {
         if(token->type == TOKEN_FUNC) // <functions> --> function id ( <list_of_parameters> ) : <list_of_datatypes> <list_of_statements> end
         {
-            //processFunctionDefinition(ast, symTable, f, dynamicString, tokenStack);
+            processFunctionDefinition(ast, hashTableList, f, dynamicString, tokenStack);
         }
         else if(token->type == TOKEN_GLOBAL) // <functions> --> global id : function ( <list_of_datatypes> ) : <list_of_datatypes>
         {
-            //processFunctionDeclaration(ast, symTable, f, dynamicString, tokenStack);
+            processFunctionDeclaration(ast, hashTableList, f, dynamicString, tokenStack);
         }
         else if(token->type == TOKEN_ID) // <functions> --> id ( )
         {
-            //processVoidFunctionCall(ast, symTable, f, token, dynamicString, tokenStack);
+            processVoidFunctionCall(ast, hashTableList, f, token, dynamicString, tokenStack);
         }
         else // don't know this rule :(
         {
@@ -683,18 +685,19 @@ void processProgramTemplate(ast_node *ast, htab_t **symTable, FILE *f, DynamicSt
 }
 
 // main function that starts building ast
-ast_node *parseAST(htab_t **symTable, FILE *f)
+ast_node *parseAST(htab_t *symTable, FILE *f)
 {
     StackTokens tokenStack;
     initStackTokens(&tokenStack);
     DynamicString dynamicString;
     DynamicStringInit(&dynamicString);
     htab_list_t *hashTableList = initList();
-    
+    htab_list_item_t *newItem = createItem(symTable);
+    insertFirst(hashTableList, newItem);
     ast_node *ast = make_new_node();
     ast->nodeType = NODE_PROG;
-    //token_t *token = getToken(f, &dynamicString, &tokenStack);
-    processProgramTemplate(ast, symTable, f, &dynamicString, &tokenStack);
+    processProgramTemplate(ast, hashTableList, f, &dynamicString, &tokenStack);
+
     return ast;
 }
 

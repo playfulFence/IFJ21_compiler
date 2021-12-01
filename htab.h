@@ -49,6 +49,7 @@ typedef struct htab_data {
     variableDatatype_t datatype;    // datatype of variable
     int varIntVal;
     double varNumVal;
+    char* varStrVal;
     int countOfArgs;
     int countOfReturns;
     struct htab_data* funcArgs;     // array of function arguments
@@ -97,6 +98,7 @@ void htab_clear(htab_t * t);    // ruší všechny záznamy
 void htab_free(htab_t * t);     // destruktor tabulky
 
 htab_list_t* initList();
+htab_list_item_t* createItem(htab_t*);
 void insertFirst(htab_list_t*, htab_list_item_t*);
 
 void removeFirst(htab_list_t*);
