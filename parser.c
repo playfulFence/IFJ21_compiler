@@ -689,6 +689,8 @@ ast_node *parseAST(htab_t **symTable, FILE *f)
     initStackTokens(&tokenStack);
     DynamicString dynamicString;
     DynamicStringInit(&dynamicString);
+    htab_list_t *hashTableList = initList();
+    
     ast_node *ast = make_new_node();
     ast->nodeType = NODE_PROG;
     //token_t *token = getToken(f, &dynamicString, &tokenStack);
