@@ -3,12 +3,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "scanner.h"
+#include "token.h"
 
 // Element structure
 typedef struct Element
 {
-    token_t token;
+    token_t *token;
     struct Element *nextElement;
 } *ElementPtr;
 
@@ -21,11 +21,13 @@ typedef struct
 // Function to initialize the stack
 void initStackTokens(StackTokens*);
 // Function to push a new element to the stack 
-void pushToken(StackTokens*, token_t);
+void pushTokenStackTokens(StackTokens*, token_t*);
 // Function to pop an element from the stack
-void popToken(StackTokens*);
+token_t *popTokenStackTokens(StackTokens*);
 // Function to destroy the stack 
 void destroyStackTokens(StackTokens*);
+// Function to detect if stack is empty
+int isEmptyStackTokens(StackTokens*);
 
 
 

@@ -44,7 +44,7 @@ struct htab
 typedef struct htab_data {
     bool defineFlag;
     bool declareFlag;
-    htab_key_t id;          //  name of variable/function
+    htab_key_t key;          //  name of variable/function
     elementType_t type;
     variableDatatype_t datatype;    // datatype of variable
     int varIntVal;
@@ -102,7 +102,7 @@ void insertFirst(htab_list_t*, htab_list_item_t*);
 void removeFirst(htab_list_t*);
 void freeList(htab_list_t*);
 
-htab_item_t* listSearch(htab_list_t*, htab_key_t);
+htab_data_t* listSearch(htab_list_t*, htab_key_t);
 
 
 #endif // __HTAB_H__

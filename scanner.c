@@ -3,17 +3,8 @@
 #include <string.h>
 #include <ctype.h>
 #include "scanner.h"
-#include "dynamic_string.h"
 #include "htab.h"
 
-
-
-/**
- * @brief make new token
- * 
- * @param f is input file 
- * @return token_t, new token
- */
 
 tokenType_t keywordCheck(char* suspect)
 {
@@ -35,25 +26,33 @@ tokenType_t keywordCheck(char* suspect)
     else return TOKEN_ID;
 }
 
+void ungetToken(token_t *token, StackTokens *tokenStack)
+{
+    pushTokenStackTokens(tokenStack,token);
+}
 
-
-token_t getToken(FILE *f)
+token_t *getToken(FILE *f, DynamicString *dynamicString, StackTokens *tokenStack)
 {
     // dynamic string variable
-    DynamicString dynamicString;
+    //DynamicString dynamicString;
     // initialize dynamic string
-    DynamicStringInit(&dynamicString);
+    //DynamicStringInit(dynamicString);
     // token variable
-    token_t newToken;
-    newToken.data.tokenStringVal = NULL;
-    newToken.data.tokenIntVal = 0;
-    newToken.data.tokenNumVal = 0;
+    if(!isEmptyStackTokens(tokenStack))
+    {
+        return popTokenStackTokens(tokenStack);
+    }
+    token_t *newToken = malloc(sizeof(token_t));
+    newToken->data.tokenStringVal = NULL;
+    newToken->data.tokenIntVal = 0;
+    newToken->data.tokenNumVal = 0;
     // FSM state variable 
     fsmState currentState = START_STATE;
     // char variable to read symbol from input
     char symbol;
+    int completeToken = 0;
     // read symbol by symbol until it's not a token
-    while (1)
+    while (!completeToken)
     {
         symbol = getc(f);
 
@@ -68,14 +67,14 @@ token_t getToken(FILE *f)
                 else if(symbol == EOF)
                 {
                     // create end of file token
-                    newToken.type = TOKEN_EOF;
-                    return newToken;
+                    newToken->type = TOKEN_EOF;
+                    completeToken = 1;
                 }
                 else if(isalpha(symbol) || symbol == '_')
                 {
                     // start of ID or KW token 
                     // add symbol to the string
-                    DynamicStringInsertLast(&dynamicString, symbol);
+                    DynamicStringInsertLast(dynamicString, symbol);
                     //change state to ID_OR_KW_STATE 
                     currentState = ID_OR_KW_STATE;
                 }
@@ -83,7 +82,7 @@ token_t getToken(FILE *f)
                 {
                     // start of the integer token 
                     // add symbol to the string
-                    DynamicStringInsertLast(&dynamicString, symbol);
+                    DynamicStringInsertLast(dynamicString, symbol);
                     // change state to INT_STATE 
                     currentState = INT_STATE;
                 }
@@ -128,8 +127,8 @@ token_t getToken(FILE *f)
                     // change state to START_STATE
                     currentState = START_STATE;
                     // create plus token
-                    newToken.type = TOKEN_PLUS;
-                    return newToken;
+                    newToken->type = TOKEN_PLUS;
+                    completeToken = 1;
                 }
                 else if(symbol == '/')
                 {
@@ -141,32 +140,32 @@ token_t getToken(FILE *f)
                     // change state to START_STATE
                     currentState = START_STATE;
                     // create mult token 
-                    newToken.type = TOKEN_MULT;
-                    return newToken;
+                    newToken->type = TOKEN_MULT;
+                    completeToken = 1;
                 }
                 else if(symbol == '#')
                 {
                     // change state to START_STATE
                     currentState = START_STATE;
                     // create strlen token
-                    newToken.type = TOKEN_STRLEN;
-                    return newToken;
+                    newToken->type = TOKEN_STRLEN;
+                    completeToken = 1;
                 }
                 else if(symbol == ',')
                 {
                     // change state to START_STATE
                     currentState = START_STATE;
                     // create comma token
-                    newToken.type = TOKEN_COMMA;
-                    return newToken;
+                    newToken->type = TOKEN_COMMA;
+                    completeToken = 1;
                 }
                 else if(symbol == ':')
                 {
                     // change state to START_STATE
                     currentState = START_STATE;
                     // create colon token 
-                    newToken.type = TOKEN_COLON;
-                    return newToken;
+                    newToken->type = TOKEN_COLON;
+                    completeToken = 1;
                 }
                 else if(symbol == '-')
                 {
@@ -176,14 +175,14 @@ token_t getToken(FILE *f)
                 else if(symbol == '(')
                 {
                     currentState = START_STATE;
-                    newToken.type = TOKEN_L_BR;
-                    return newToken;
+                    newToken->type = TOKEN_L_BR;
+                    completeToken = 1;
                 }
                 else if(symbol == ')')
                 {
                     currentState = START_STATE;
-                    newToken.type = TOKEN_R_BR;
-                    return newToken;
+                    newToken->type = TOKEN_R_BR;
+                    completeToken = 1;
                 }
                 break;
             
@@ -191,7 +190,7 @@ token_t getToken(FILE *f)
                 if((symbol == '_') || isalpha(symbol) || isdigit(symbol))
                 {
                     // add symbol to the string
-                    DynamicStringInsertLast(&dynamicString, symbol);
+                    DynamicStringInsertLast(dynamicString, symbol);
                     // state doesn't change
                     currentState = ID_OR_KW_STATE;
                 }
@@ -202,12 +201,10 @@ token_t getToken(FILE *f)
                     ungetc(symbol,f);
                     // create id token
                     //newToken.type = TOKEN_ID;
-                    char* tmp = DynamicStringToString(&dynamicString);
-                    newToken.data.tokenStringVal = tmp;
-
-                    newToken.type = keywordCheck(newToken.data.tokenStringVal);
+                    newToken->data.tokenStringVal = DynamicStringToString(dynamicString);
+                    newToken->type = keywordCheck(newToken->data.tokenStringVal);
                     //free(tmp);
-                    return newToken;
+                    completeToken = 1;
                 }
                 break;
 
@@ -215,21 +212,21 @@ token_t getToken(FILE *f)
                 if(isdigit(symbol))
                 {
                     // add symbol to the string
-                    DynamicStringInsertLast(&dynamicString, symbol);
+                    DynamicStringInsertLast(dynamicString, symbol);
                     // state doesn't change
                     currentState = INT_STATE;
                 }
                 else if(symbol == '.')
                 {
                     // add symbol to the string
-                    DynamicStringInsertLast(&dynamicString, symbol);
+                    DynamicStringInsertLast(dynamicString, symbol);
                     // change state to INT_DOT_STATE
                     currentState = INT_DOT_STATE;
                 }
                 else if(symbol == 'e' || symbol == 'E')
                 {
                     // add symbol to the string 
-                    DynamicStringInsertLast(&dynamicString, symbol);
+                    DynamicStringInsertLast(dynamicString, symbol);
                     // change state to INT_DOT_STATE
                     currentState = EXP_STATE;
                 }
@@ -240,9 +237,9 @@ token_t getToken(FILE *f)
                     // change state to START_STATE
                     currentState = START_STATE;
                     // create int token 
-                    newToken.type = TOKEN_INT;
-                    newToken.data.tokenIntVal = DynamicStringToInt(&dynamicString);
-                    return newToken;
+                    newToken->type = TOKEN_INT;
+                    newToken->data.tokenIntVal = DynamicStringToInt(dynamicString);
+                    completeToken = 1;
                 }
                 break;
 
@@ -250,7 +247,7 @@ token_t getToken(FILE *f)
                 if(isdigit(symbol))
                 {
                     // add symbol to the string 
-                    DynamicStringInsertLast(&dynamicString, symbol);
+                    DynamicStringInsertLast(dynamicString, symbol);
                     // change state to NUMBER_STATE
                     currentState = NUMBER_STATE;
                 }
@@ -264,14 +261,14 @@ token_t getToken(FILE *f)
                 if(isdigit(symbol))
                 {
                     // add symbol to the string
-                    DynamicStringInsertLast(&dynamicString, symbol);
+                    DynamicStringInsertLast(dynamicString, symbol);
                     // state doesn't change
                     currentState = NUMBER_STATE;
                 }
                 else if (symbol == 'e' || symbol == 'E')
                 {
                     // add symbol to the string
-                    DynamicStringInsertLast(&dynamicString, symbol);
+                    DynamicStringInsertLast(dynamicString, symbol);
                     // change state to EXP_STATE
                     currentState = EXP_STATE;
                 }
@@ -282,9 +279,9 @@ token_t getToken(FILE *f)
                     // change state to START_STATE
                     currentState = START_STATE;
                     // create num token 
-                    newToken.type = TOKEN_NUM;
-                    newToken.data.tokenNumVal = DynamicStringToDouble(&dynamicString);
-                    return newToken;
+                    newToken->type = TOKEN_NUM;
+                    newToken->data.tokenNumVal = DynamicStringToDouble(dynamicString);
+                    completeToken = 1;
                 }
                 break;
 
@@ -292,14 +289,14 @@ token_t getToken(FILE *f)
                 if(symbol == '+' || symbol == '-')
                 {
                     // add symbol to the string
-                    DynamicStringInsertLast(&dynamicString, symbol);
+                    DynamicStringInsertLast(dynamicString, symbol);
                     // change state to EXP_PLUS_OR_MINUS_STATE
                     currentState = EXP_PLUS_OR_MINUS_STATE;
                 }
                 else if (isdigit(symbol))
                 {
                     // add symbol to the string
-                    DynamicStringInsertLast(&dynamicString, symbol);
+                    DynamicStringInsertLast(dynamicString, symbol);
                     // change state to EXP_NUMBER_STATE
                     currentState = EXP_NUMBER_STATE;
                 }
@@ -313,7 +310,7 @@ token_t getToken(FILE *f)
                 if(isdigit(symbol))
                 {
                     // add symbol to the string 
-                    DynamicStringInsertLast(&dynamicString, symbol);
+                    DynamicStringInsertLast(dynamicString, symbol);
                     // change state to EXP_NUMBER_STATE
                     currentState = EXP_NUMBER_STATE;
                 }
@@ -327,7 +324,7 @@ token_t getToken(FILE *f)
                 if(isdigit(symbol))
                 {
                     // add symbol to the string 
-                    DynamicStringInsertLast(&dynamicString, symbol);
+                    DynamicStringInsertLast(dynamicString, symbol);
                     // state doesn't change
                     currentState = EXP_NUMBER_STATE;
                 }
@@ -338,9 +335,9 @@ token_t getToken(FILE *f)
                     // change state to START_STATE
                     currentState = START_STATE;
                     // create num token 
-                    newToken.type = TOKEN_NUM;
-                    newToken.data.tokenNumVal = DynamicStringExpToDouble(&dynamicString);
-                    return newToken;
+                    newToken->type = TOKEN_NUM;
+                    newToken->data.tokenNumVal = DynamicStringExpToDouble(dynamicString);
+                    completeToken = 1;
                 }
                 break;
 
@@ -353,14 +350,14 @@ token_t getToken(FILE *f)
                 {
                     // change state to START_STATE
                     currentState = START_STATE;
-                    newToken.type = TOKEN_STR;
-                    newToken.data.tokenStringVal = DynamicStringToString(&dynamicString);
-                    return newToken;
+                    newToken->type = TOKEN_STR;
+                    newToken->data.tokenStringVal = DynamicStringToString(dynamicString);
+                    completeToken = 1;
                 }
                 else
                 {
                     // add symbol to the string
-                    DynamicStringInsertLast(&dynamicString, symbol);
+                    DynamicStringInsertLast(dynamicString, symbol);
                     // state doesn't change 
                     currentState = STRING_STATE;
                 }
@@ -371,22 +368,22 @@ token_t getToken(FILE *f)
                 {
                 case '\\':
                     // add symbol to the string
-                    DynamicStringInsertLast(&dynamicString, '\\');
+                    DynamicStringInsertLast(dynamicString, '\\');
                     currentState = STRING_STATE;
                     break;
                 case '\"':
                     // add symbol to the string
-                    DynamicStringInsertLast(&dynamicString, '\"');
+                    DynamicStringInsertLast(dynamicString, '\"');
                     currentState = STRING_STATE;
                     break;
                 case 't':
                     // add symbol to the string
-                    DynamicStringInsertLast(&dynamicString, '\t');
+                    DynamicStringInsertLast(dynamicString, '\t');
                     currentState = STRING_STATE;
                     break;
                 case 'n':
                     // add symbol to the string
-                    DynamicStringInsertLast(&dynamicString, '\n');
+                    DynamicStringInsertLast(dynamicString, '\n');
                     currentState = STRING_STATE;
                     break;
                 case '0':
@@ -414,7 +411,7 @@ token_t getToken(FILE *f)
                     if(isdigit(symbol))
                     {
                         escape_sequence[2] = symbol;
-                        DynamicStringInsertLast(&dynamicString, atoi(escape_sequence));
+                        DynamicStringInsertLast(dynamicString, atoi(escape_sequence));
                         currentState = STRING_STATE;
                     }
                     else
@@ -436,7 +433,7 @@ token_t getToken(FILE *f)
                     if(symbol >= '0' && symbol <='5')
                     {
                         escape_sequence[2] = symbol;
-                        DynamicStringInsertLast(&dynamicString, atoi(escape_sequence));
+                        DynamicStringInsertLast(dynamicString, atoi(escape_sequence));
                         currentState = STRING_STATE;
                     }
                     else
@@ -456,8 +453,8 @@ token_t getToken(FILE *f)
                     // change state to START_STATE
                     currentState = START_STATE;
                     // create token int div
-                    newToken.type = TOKEN_D_BS;
-                    return newToken;
+                    newToken->type = TOKEN_D_BS;
+                    completeToken = 1;
                 }
                 else
                 {
@@ -466,8 +463,8 @@ token_t getToken(FILE *f)
                     // change state to START_STATE
                     currentState = START_STATE;
                     // create div token
-                    newToken.type = TOKEN_S_BS;
-                    return newToken;
+                    newToken->type = TOKEN_S_BS;
+                    completeToken = 1;
                 }
                 break;
 
@@ -477,8 +474,8 @@ token_t getToken(FILE *f)
                     // change state to START_STATE
                     currentState = START_STATE;
                     // create not equal token 
-                    newToken.type = TOKEN_NEQ;
-                    return newToken;
+                    newToken->type = TOKEN_NEQ;
+                    completeToken = 1;
                 }
                 else
                 {
@@ -492,15 +489,15 @@ token_t getToken(FILE *f)
                     // change state to START_STATE
                     currentState = START_STATE;
                     // create equal token
-                    newToken.type = TOKEN_EQ;
-                    return newToken;
+                    newToken->type = TOKEN_EQ;
+                    completeToken = 1;
                 }
                 else
                 {
                     ungetc(symbol,f);
                     currentState = START_STATE;
-                    newToken.type = TOKEN_ASSIGNMENT;
-                    return newToken;
+                    newToken->type = TOKEN_ASSIGNMENT;
+                    completeToken = 1;
                 }
                 break;
 
@@ -510,8 +507,8 @@ token_t getToken(FILE *f)
                     // change state to START_STATE
                     currentState = START_STATE;
                     // create greater or equal token
-                    newToken.type = TOKEN_GREAT_EQ;
-                    return newToken;
+                    newToken->type = TOKEN_GREAT_EQ;
+                    completeToken = 1;
                 }
                 else
                 {
@@ -520,8 +517,8 @@ token_t getToken(FILE *f)
                     // return symbol, should be read again
                     ungetc(symbol, f);
                     // create greater token
-                    newToken.type = TOKEN_GREAT;
-                    return newToken;
+                    newToken->type = TOKEN_GREAT;
+                    completeToken = 1;
                 }
                 break;
 
@@ -531,8 +528,8 @@ token_t getToken(FILE *f)
                     // change state to START_STATE
                     currentState = START_STATE;
                     // create less or equal token 
-                    newToken.type = TOKEN_LESS_EQ;
-                    return newToken;
+                    newToken->type = TOKEN_LESS_EQ;
+                    completeToken = 1;
                 }
                 else
                 {
@@ -541,8 +538,8 @@ token_t getToken(FILE *f)
                     // return symbol, should be read again
                     ungetc(symbol, f);
                     // create less token
-                    newToken.type = TOKEN_LESS;
-                    return newToken;
+                    newToken->type = TOKEN_LESS;
+                    completeToken = 1;
                 }
                 break;
 
@@ -552,8 +549,8 @@ token_t getToken(FILE *f)
                     // change state to START_STATE
                     currentState = START_STATE;
                     // create concatenation token 
-                    newToken.type = TOKEN_CONC;
-                    return newToken;
+                    newToken->type = TOKEN_CONC;
+                    completeToken = 1;
                 }
                 else
                 {
@@ -574,8 +571,8 @@ token_t getToken(FILE *f)
                     // return symbol, should be read again
                     ungetc(symbol, f);
                     // create minus token 
-                    newToken.type = TOKEN_MINUS;
-                    return newToken;
+                    newToken->type = TOKEN_MINUS;
+                    completeToken = 1;
                 }
                 break;
 
@@ -588,6 +585,11 @@ token_t getToken(FILE *f)
                 else if (symbol == '\n' || symbol == '\r')
                 {
                     // change state to START_STATE
+                    currentState = START_STATE;
+                }
+                else if(symbol == EOF)
+                {
+                    ungetc(symbol, f);
                     currentState = START_STATE;
                 }
                 else
@@ -603,6 +605,11 @@ token_t getToken(FILE *f)
                     // change state to BLOCK_COMMENT_STATE
                     currentState = BLOCK_COMMENT_STATE;
                 }
+                else if(symbol == EOF)
+                {
+                    ungetc(symbol, f);
+                    currentState = START_STATE;
+                }
                 else
                 {
                     // change state to LINE_COMMENT_STATE
@@ -615,6 +622,11 @@ token_t getToken(FILE *f)
                 {
                     // change state to BLOCK_COMMENT_END_STATE
                     currentState = BLOCK_COMMENT_END_STATE;
+                }
+                else if(symbol == EOF)
+                {
+                    ungetc(symbol, f);
+                    currentState = START_STATE;
                 }
                 else
                 {
@@ -629,6 +641,11 @@ token_t getToken(FILE *f)
                     // change state to START_STATE
                     currentState = START_STATE;
                 }
+                else if(symbol == EOF)
+                {
+                    ungetc(symbol, f);
+                    currentState = START_STATE;
+                }
                 else
                 {
                     // change state to BLOCK_COMMENT_STATE
@@ -637,6 +654,7 @@ token_t getToken(FILE *f)
                 break;
         }
     }
+    DynamicStringDispose(dynamicString);
     return newToken;
 }
 
