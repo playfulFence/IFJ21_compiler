@@ -335,6 +335,27 @@ htab_list_t* initList()
     return list;
 }
 
+htab_list_item_t* createItem(htab_t* toBePacked)
+{
+    if(!toBePacked)
+    {
+        printf("%s ERROR: You're passing hashtable, that doesn't exist!!! Exit...\n", __func__);
+        exit(228); // TODO
+    }
+    htab_list_item_t * newItem = malloc(sizeof(htab_list_item_t));
+
+    if(!newItem)
+    {
+        printf("%s ERROR: Can't allocate new item of list!!! Exit...\n", __func__);
+        exit(228); // TODO
+    }
+
+    newItem->symtable = toBePacked;
+    newItem->next = NULL;
+
+    return newItem;
+}
+
 void insertFirst(htab_list_t* list, htab_list_item_t* item)
 {
     if(!list || !item)
