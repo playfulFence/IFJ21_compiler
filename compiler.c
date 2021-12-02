@@ -52,23 +52,23 @@ int main(int argc, char** argv)
     //testScanner(prog);
     
      // call parser to make abastract syntax tree
-    ast_node *ast = parseAST(symtable, prog);
+    //ast_node *ast = parseAST(symtable, prog);
 
 
     
     
-    // ast_node *ast = make_new_node();
-    // ast_node *child1 = make_new_node();
-    // make_new_child(ast, child1);
-    // ast_node *child2 = make_new_node();
-    // make_new_child(ast, child2);
-    // ast_node *child3 = make_new_node();
-    // make_new_child(child1, child3);
-    // ast_node *child4 = make_new_node();
-    // make_new_child(ast, child4);
-    // ast_node *child5 = make_new_node();
-    // make_new_child(child3, child5);
-    // printAST(ast);
+    ast_node *ast = make_new_node();
+    ast_node *child1 = make_new_node();
+    make_new_child(ast, child1);
+    ast_node *child2 = make_new_node();
+    make_new_child(ast, child2);
+    ast_node *child3 = make_new_node();
+    make_new_child(child1, child3);
+    ast_node *child4 = make_new_node();
+    make_new_child(ast, child4);
+    ast_node *child5 = make_new_node();
+    make_new_child(child3, child5);
+    printAST(ast);
     
     fclose(prog);
     return 0;

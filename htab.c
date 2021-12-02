@@ -450,3 +450,31 @@ htab_data_t* createData(htab_key_t key, variableDatatype_t datatype)
     return newData;
 }
 
+
+void copyDataFuncCall(htab_data_t* from, htab_data_t* to)
+{
+    to->countOfArgs = from->countOfArgs;
+    to->countOfReturns = from->countOfReturns;
+
+    to->key = from->key;
+
+    to->funcArgs = malloc(sizeof(htab_data_t) * to->countOfArgs);
+    to->funcReturns = malloc(sizeof(htab_data_t) * to->countOfReturns);
+
+    for(int i = 0; i < to->countOfArgs; i++)
+    {
+        htab_data_t * tmp = malloc(sizeof(htab_data_t));
+        tmp->datatype = from->datatype;
+        tmp->key = from->key;
+        tmp->type = from->type;
+        to->funcArgs[i] = tmp;
+    }
+
+    for(int i = 0; i < to->countOfReturns; i++)
+    {
+        htab_data_t * tmp = malloc(sizeof(htab_data_t));
+        tmp->datatype = from->datatype;
+        to->funcReturns[i] = tmp;
+    }
+}
+

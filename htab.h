@@ -114,5 +114,7 @@ void makeNewArg(htab_data_t*, htab_data_t*);
 void makeNewRet(htab_data_t*, htab_data_t*);
 htab_data_t* createData(htab_key_t, variableDatatype_t);
 
+void copyDataFuncCall(htab_data_t*, htab_data_t*);
+
 
 #endif // __HTAB_H__
