@@ -5,6 +5,10 @@
 #include <stdbool.h>    // bool
 
 
+#define FROM_FIRST 0    // For listSearch function
+#define FROM_SECOND 1
+
+
 typedef struct htab_item htab_item_t;
 
 typedef struct htab htab_t;
@@ -52,8 +56,8 @@ typedef struct htab_data {
     char* varStrVal;
     int countOfArgs;
     int countOfReturns;
-    struct htab_data* funcArgs;     // array of function arguments
-    struct htab_data* funcReturns;  // array of function return variables
+    struct htab_data** funcArgs;     // array of function arguments
+    struct htab_data** funcReturns;  // array of function return variables
 } htab_data_t;
 
 
@@ -104,7 +108,11 @@ void insertFirst(htab_list_t*, htab_list_item_t*);
 void removeFirst(htab_list_t*);
 void freeList(htab_list_t*);
 
-htab_data_t* listSearch(htab_list_t*, htab_key_t);
+htab_data_t* listSearch(htab_list_t*, htab_key_t, bool);
+
+void makeNewArg(htab_data_t*, htab_data_t*);
+void makeNewRet(htab_data_t*, htab_data_t*);
+htab_data_t* createData(htab_key_t, variableDatatype_t);
 
 
 #endif // __HTAB_H__

@@ -403,7 +403,7 @@ void freeList(htab_list_t* list)
     free(list);
 }
 
-htab_data_t* listSearch(htab_list_t* list, htab_key_t key)
+htab_data_t* listSearch(htab_list_t* list, htab_key_t key, bool choose)
 {
     if(!list)
     {
@@ -411,7 +411,7 @@ htab_data_t* listSearch(htab_list_t* list, htab_key_t key)
         exit(228); // TODO
     }
 
-    htab_list_item_t* inspectorGadget = list->first;
+    htab_list_item_t* inspectorGadget = choose ? list->first->next : list->first;
     while(inspectorGadget)
     {
         if(htab_find(inspectorGadget->symtable, key)) return htab_find(inspectorGadget->symtable, key);
@@ -419,5 +419,34 @@ htab_data_t* listSearch(htab_list_t* list, htab_key_t key)
     }
 
     return NULL;
+}
+
+void makeNewArg(htab_data_t* functionData, htab_data_t* parameterData)
+{
+    functionData->countOfArgs++;
+    functionData->funcArgs = realloc(functionData->funcArgs, sizeof(htab_data_t) * functionData->countOfArgs);
+    functionData->funcArgs[functionData->countOfArgs - 1] = parameterData;
+}
+
+void makeNewRet(htab_data_t* functionData, htab_data_t* returnData)
+{
+    functionData->countOfReturns++;
+    functionData->funcReturns = realloc(functionData->funcReturns, sizeof(htab_data_t) * functionData->countOfReturns);
+    functionData->funcReturns[functionData->countOfReturns - 1] = returnData;
+}
+
+htab_data_t* createData(htab_key_t key, variableDatatype_t datatype)
+{
+    htab_data_t* newData = malloc(sizeof(htab_data_t));
+    if(!newData)
+    {
+        printf("%s ERROR: Unable to create new data! Exit...", __func__);
+        exit(228);
+    }
+    newData->key = key;
+    newData->type = TYPE_VARIABLE; // default!!!
+    newData->datatype = datatype;
+
+    return newData;
 }
 
