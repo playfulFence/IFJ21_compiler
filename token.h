@@ -1,6 +1,8 @@
 #ifndef __TOKEN_H__
 #define __TOKEN_H__
 
+#include <stdbool.h>
+
 typedef enum tokenType
 {
     TOKEN_ID,           // identifier token
@@ -48,6 +50,7 @@ typedef struct tokenData
     int tokenIntVal;
     char* tokenStringVal;
     double tokenNumVal;
+    bool nilFlag;
 } tokenData_t;
 
 typedef struct token

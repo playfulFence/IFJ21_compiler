@@ -50,6 +50,8 @@ typedef enum treeNodeTypes
     NODE_INT_ARG,
     NODE_NUM_ARG,
     NODE_STR_ARG,
+    NODE_NIL_ARG,
+    NODE_ZERO_ARG,
     NODE_ID_ARG,
     NODE_MULTIPLE_ASSIGN,
     NODE_PROG
@@ -62,6 +64,8 @@ typedef struct abstract_syntax_tree_node
         int intData;
         double doubleData;
         char *stringData;
+        bool zeroFlag;
+        bool nilFlag;
     }nodeData;
     htab_data_t *hashTableItem; // Pointer to hashTable element
     int childrenCounter; // Amount of children 

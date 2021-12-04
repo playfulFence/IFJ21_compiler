@@ -863,8 +863,7 @@ void processVoidFunctionCall(ast_node *ast, htab_list_t* hashTableList, FILE *f,
 // <functions> --> global id : function ( <list_of_datatypes> ) : <list_of_datatypes>
 void processFunctionDeclaration(ast_node *ast, htab_list_t* hashTableList, FILE *f, DynamicString *dynamicString, StackTokens *tokenStack)
 {
-    //TODO check if function was declared and then DEFINED with same datatypes of args and returns
-
+    
     // make node for function declaration
     ast_node *funcDeclNode = make_new_node();
     funcDeclNode->nodeType = NODE_FUNC_DECL;
@@ -1059,6 +1058,7 @@ void processProgramTemplate(ast_node *ast, htab_list_t *hashTableList, FILE *f, 
 // main function that starts building ast
 ast_node *parseAST(htab_t *symTable, FILE *f)
 {
+    //insertBuiltIn
     StackTokens tokenStack;
     initStackTokens(&tokenStack);
     DynamicString dynamicString;

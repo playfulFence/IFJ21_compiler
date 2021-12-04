@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "error.h"
 
 void errorExit(errorType_t errorNum, int line)
@@ -49,3 +50,19 @@ void errorExit(errorType_t errorNum, int line)
         break;
     }
 }
+
+// void checkBuiltIn(char* funcName, int line)
+// {
+//     if(!strcmp(funcName, "reads") ||
+//        !strcmp(funcName, "readi") ||
+//        !strcmp(funcName, "readn") ||
+//        !strcmp(funcName, "write") ||
+//        !strcmp(funcName, "tointeger") ||
+//        !strcmp(funcName, "substr") ||
+//        !strcmp(funcName, "ord") ||
+//        !strcmp(funcName, "chr"))
+//        {
+//            errorExit(SEMANTIC_UNDEF_REDEF_ERR, line);
+//        }
+// }
+

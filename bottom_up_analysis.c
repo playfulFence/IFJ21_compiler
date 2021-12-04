@@ -1,6 +1,7 @@
 #include "bottom_up_analysis.h"
 #include "string.h"
 #include "stdio.h"
+#include "error.h"
 
 NoneTerminal transformTokenToNoneTerminal(tokenType_t type)
 {
@@ -158,15 +159,41 @@ void reduceByTheRule(NoneTerminal *topNoneTerminal, NoneTerminalStack *stackOfNo
     }
 }
 
-void shiftElement(token_t *expressionToken, NoneTerminal nextNoneTerminal, StackTokens *stackOfVaruables, NoneTerminalStack *stackOfNoneTerminals)
+void shiftElement(token_t *expressionToken, htab_list_t* hashTableList, NoneTerminal nextNoneTerminal, StackTokens *stackOfVaruables, NoneTerminalStack *stackOfNoneTerminals)
 {
     pushNoneTerminalElement(stackOfNoneTerminals, nextNoneTerminal);
     if(expressionToken->type == TOKEN_STR || expressionToken->type == TOKEN_INT || expressionToken->type == TOKEN_NUM || expressionToken->type == TOKEN_ID)
     {
         if(expressionToken->type == TOKEN_ID)
         {
-            // TODO find variable by id, change expression token type to INT/NUM/STR and set value INT/NUM/STR/NIL
-            // maybe if variable has NIL value it's error, because you can't use undefined variable 
+            if(!listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_FIRST) || !listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_FIRST)->defineFlag)
+            {
+                errorExit(SEMANTIC_UNDEF_REDEF_ERR, expressionToken->line);
+            }
+
+            htab_data_t* thisIDvar = listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_FIRST);
+
+
+            if(thisIDvar->datatype == DATATYPE_INT) 
+            {
+                expressionToken->type = TOKEN_INT;
+                expressionToken->data.tokenIntVal = thisIDvar->varIntVal;
+            }
+            else if(thisIDvar->datatype == DATATYPE_NUM)
+            {
+                expressionToken->type = TOKEN_NUM;
+                expressionToken->data.tokenNumVal = thisIDvar->varNumVal;
+            }
+            else if(thisIDvar->datatype == DATATYPE_STRING)
+            {
+                expressionToken->type = TOKEN_STR;
+                expressionToken->data.tokenStringVal = thisIDvar->varStrVal;
+            }
+            else if(thisIDvar->datatype == DATATYPE_NIL)
+            {
+                expressionToken->type = TOKEN_NIL;
+                expressionToken->data.nilFlag = true;
+            }
         }
         pushTokenStackTokens(stackOfVaruables, expressionToken);
     }
@@ -268,8 +295,183 @@ void buildTreeFromRuleSequence(ast_node *node, DynamicString *ruleSequenceString
 
 void expressionSemCheck(ast_node *leftOperand, ast_node *rightOperand, treeNodeType operatorType)
 {
-    // TODO check datatypes of operands for every type of operator
-    // think about changing INT to NUM if it's legal for some of the operators(search information in google doc)
+    switch (operatorType)
+    {
+    case NODE_MULT:
+        if(leftOperand->nodeType == NODE_INT_ARG)
+        {
+            switch (rightOperand->nodeType)
+            {
+            case NODE_INT_ARG:
+                return;
+            case NODE_NUM_ARG:
+                return;   
+            default:
+                fprintf(stderr,"NOTE: You're trying to mulitply INT by something wrong...\n");
+                errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 0); // TODO think about line
+                break;
+            }
+        }
+        else if(leftOperand->nodeType == NODE_NUM_ARG)
+        {
+            switch (rightOperand->nodeType)
+            {
+            case NODE_INT_ARG:
+                return;
+            case NODE_NUM_ARG:
+                return;   
+            default:
+                fprintf(stderr,"NOTE: You're trying to mulitply NUM by something wrong...\n");
+                errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 0); // TODO think about line
+                break;
+            }
+        }
+        else if(leftOperand->nodeType == NODE_STR_ARG)
+        {
+            fprintf(stderr,"NOTE: You're trying to mulitply STR\n");
+            errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 0);
+        }
+        break;
+    
+    case NODE_DIV:
+        if(leftOperand->nodeType == NODE_INT_ARG)
+            {
+                switch (rightOperand->nodeType)
+                {
+                case NODE_INT_ARG:
+                    if(rightOperand->nodeData.zeroFlag == true) errorExit(ZERO_DIV_ERR, 0);
+                    return;
+                case NODE_NUM_ARG:
+                    if(rightOperand->nodeData.zeroFlag == true) errorExit(ZERO_DIV_ERR, 0);
+                    return;   
+                default:
+                    fprintf(stderr,"NOTE: You're trying to divide INT by something wrong...\n");
+                    errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 0); // TODO think about line
+                    break;
+                }
+            }
+            else if(leftOperand->nodeType == NODE_NUM_ARG)
+            {
+                switch (rightOperand->nodeType)
+                {
+                case NODE_INT_ARG:
+                    if(rightOperand->nodeData.zeroFlag == true) errorExit(ZERO_DIV_ERR, 0);
+                    return;
+                case NODE_NUM_ARG:
+                    if(rightOperand->nodeData.zeroFlag == true) errorExit(ZERO_DIV_ERR, 0);
+                    return;   
+                default:
+                    fprintf(stderr,"NOTE: You're trying to divide NUM by something wrong...\n");
+                    errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 0); // TODO think about line
+                    break;
+                }
+            }
+            else if(leftOperand->nodeType == NODE_STR_ARG)
+            {
+                fprintf(stderr,"NOTE: You're trying to divide STR\n");
+                errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 0);
+            }
+            break;
+        
+    case NODE_MINUS:
+    case NODE_PLUS:
+        if(leftOperand->nodeType == NODE_INT_ARG)
+        {
+            switch (rightOperand->nodeType)
+            {
+            case NODE_INT_ARG:
+                return;
+            case NODE_NUM_ARG:
+                return;   
+            default:
+                fprintf(stderr,"NOTE: You're trying to +/- INT with something wrong...\n");
+                errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 0); // TODO think about line
+                break;
+            }
+        }
+        else if(leftOperand->nodeType == NODE_NUM_ARG)
+        {
+            switch (rightOperand->nodeType)
+            {
+            case NODE_INT_ARG:
+                return;
+            case NODE_NUM_ARG:
+                return;   
+            default:
+                fprintf(stderr,"NOTE: You're trying to +/- NUM with something wrong...\n");
+                errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 0); // TODO think about line
+                break;
+            }
+        }
+        else if(leftOperand->nodeType == NODE_STR_ARG)
+        {
+            fprintf(stderr,"NOTE: You're trying to +/- STR\n");
+            errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 0);
+        }
+        break;
+
+    case NODE_CONC:
+        if(leftOperand->nodeType == NODE_STR_ARG && rightOperand->nodeType == NODE_STR_ARG) return;
+        else
+        {
+            fprintf(stderr, "NOTE: You're trying to concatenate something wrong\n");
+            errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 0);
+        }
+        break;
+    case NODE_STRLEN:
+        if(leftOperand->nodeType == NODE_STR_ARG) return;
+        else
+        {
+            fprintf(stderr, "NOTE: You're trying to get length of something, what is not string\n");
+            errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 0);
+        }
+        break;
+
+    case NODE_EQUAL:
+    case NODE_NEQ:
+        if(leftOperand->nodeType == NODE_INT_ARG || leftOperand->nodeType == NODE_NUM_ARG)
+        {
+            switch (rightOperand->nodeType)
+            {
+            case NODE_INT_ARG:
+                return;
+            case NODE_NUM_ARG:
+                return;   
+            default:
+                fprintf(stderr,"NOTE: You're trying to compare INT/NUM with something wrong...\n");
+                errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 0); // TODO think about line
+                break;
+            }
+        }
+        if(leftOperand->nodeType == NODE_STR_ARG && rightOperand->nodeType == NODE_STR_ARG) return;
+        else
+        {
+            fprintf(stderr, "NOTE : You're trying to compare string with something wrong\n");
+            errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 0);
+        }
+        break;
+    case NODE_GEQ:
+    case NODE_GREATER:
+    case NODE_LEQ:
+    case NODE_LESS:
+        if(leftOperand->nodeType == NODE_INT_ARG || leftOperand->nodeType == NODE_NUM_ARG)
+        {
+            switch (rightOperand->nodeType)
+            {
+            case NODE_INT_ARG:
+                return;
+            case NODE_NUM_ARG:
+                return;   
+            default:
+                fprintf(stderr,"NOTE: You're trying to compare INT/NUM with something wrong...\n");
+                errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 0); // TODO think about line
+                break;
+            }
+        }
+        break;
+    default:
+        break;
+    }
 }
 
 void processNode(ast_node *node)
@@ -314,7 +516,7 @@ void processNode(ast_node *node)
         }
         else
         {
-            node->nodeData.intData = 0;
+            node->nodeData.nilFlag = true;
         }
         break;
     case NODE_LEQ:
@@ -325,7 +527,7 @@ void processNode(ast_node *node)
         }
         else
         {
-            node->nodeData.intData = 0;
+            node->nodeData.nilFlag = true;
         }
         break;
     case NODE_GREATER:
@@ -336,7 +538,7 @@ void processNode(ast_node *node)
         }
         else
         {
-            node->nodeData.intData = 0;
+            node->nodeData.nilFlag = true;
         }
         break;
     case NODE_GEQ:
@@ -347,7 +549,7 @@ void processNode(ast_node *node)
         }
         else
         {
-            node->nodeData.intData = 0;
+            node->nodeData.nilFlag = true;
         }
         break;
     case NODE_NEQ:
@@ -358,7 +560,7 @@ void processNode(ast_node *node)
         }
         else
         {
-            node->nodeData.intData = 0;
+            node->nodeData.nilFlag = true;
         }
         break;
     case NODE_EQUAL:
@@ -369,7 +571,7 @@ void processNode(ast_node *node)
         }
         else
         {
-            node->nodeData.intData = 0;
+            node->nodeData.nilFlag = true;
         }
         break;
     default:
@@ -397,6 +599,7 @@ void simplifyTheTree(ast_node *node)
         processNode(node);
     }
 }
+
 
 ast_node *bottomUpAnalysis(htab_list_t* hashTableList, FILE *f, DynamicString *dynamicString, StackTokens *tokenStack)
 {   
@@ -438,8 +641,7 @@ ast_node *bottomUpAnalysis(htab_list_t* hashTableList, FILE *f, DynamicString *d
                 }
                 else
                 {
-                    printf("error");
-                    exit(1);
+                    errorExit(BAD_SYNTAX_ERR, expressionToken->line);
                 }
                 break;
             
@@ -450,12 +652,12 @@ ast_node *bottomUpAnalysis(htab_list_t* hashTableList, FILE *f, DynamicString *d
 
             case 2: // shift 
                 printf("Make shift!!! Top is: %d\n", topNoneTerminal);
-                shiftElement(expressionToken, nextNoneTerminal, &stackOfVariables, &stackOfNoneTerminals);
+                shiftElement(expressionToken, hashTableList, nextNoneTerminal, &stackOfVariables, &stackOfNoneTerminals);
                 topNoneTerminal = stackOfNoneTerminals.top->element;
                 break;
 
             case 3: // equal
-                shiftElement(expressionToken, nextNoneTerminal, &stackOfVariables, &stackOfNoneTerminals);
+                shiftElement(expressionToken, hashTableList, nextNoneTerminal, &stackOfVariables, &stackOfNoneTerminals);
                 topNoneTerminal = stackOfNoneTerminals.top->element;
                 break;    
             default:
@@ -480,6 +682,28 @@ ast_node *bottomUpAnalysis(htab_list_t* hashTableList, FILE *f, DynamicString *d
     printAST(expressionTree);
     simplifyTheTree(expressionTree);
     expressionTree->nodeType = NODE_ID;
+
+    if(expressionTree->nodeData.nilFlag)
+    {
+        expressionTree->nodeType = NODE_NIL_ARG;
+    }
+    else if(expressionTree->nodeData.zeroFlag)
+    {
+        expressionTree->nodeType = NODE_ZERO_ARG;
+    }
+    else if(expressionTree->nodeData.doubleData && (!expressionTree->nodeData.intData && !expressionTree->nodeData.stringData))
+    {
+        expressionTree->nodeType = NODE_NUM_ARG;
+    }
+    else if(expressionTree->nodeData.intData && (!expressionTree->nodeData.doubleData && !expressionTree->nodeData.stringData))
+    {
+        expressionTree->nodeType = NODE_INT_ARG;
+    }
+    else if(expressionTree->nodeData.stringData && (!expressionTree->nodeData.intData && !expressionTree->nodeData.doubleData))
+    {
+        expressionTree->nodeType = NODE_STR_ARG;
+    }
+    
     printAST(expressionTree);
     return returnExpressionNode;
 }
