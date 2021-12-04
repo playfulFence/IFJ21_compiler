@@ -51,7 +51,10 @@ typedef struct tokenData
 } tokenData_t;
 
 typedef struct token
-{
+{ 
+    /* Kirill */
+    int line;
+    /* Kirill */
     tokenType_t type;
     tokenData_t data;
 }token_t;

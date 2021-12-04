@@ -5,6 +5,7 @@
 //#include <ctype.h>
 
 #include "htab.h"
+#include "error.h"
 
 /* Function makes and returns hash from string according to standard you can see below */
 size_t htab_hash_function(const char *str) {
@@ -24,7 +25,7 @@ htab_t *htab_init(size_t n)
     if(hashTable == NULL)
     {
         fprintf(stderr, "%s ---> ERROR: Hash-Table allocation failed", __func__ );  /* bruh... */
-        return NULL;
+        errorExit(COMPILER_INTERN_ERR, 99);
     }
     hashTable->arr_size = n; /* Declared and CONSTANT count of array of pointers */
     hashTable->size = 0; /* But this one will change, according to count of actual recordings in table */
@@ -42,7 +43,7 @@ size_t htab_bucket_count(const htab_t * t)
 {
     if (t == NULL) {
         fprintf(stderr, "%s ---> ERROR: Hash-table doesn't exist", __func__);
-        exit(1);
+        errorExit(COMPILER_INTERN_ERR, 99);
     }
 
     return t->arr_size;
@@ -55,7 +56,7 @@ void htab_clear(htab_t *t)
     if (t == NULL)
     {
         fprintf(stderr, "%s ---> ERROR: No hash-table to be cleared. Ending program...", __func__);
-        return;
+        errorExit(COMPILER_INTERN_ERR, 99);
     }
 
     for(size_t i = 0; i < t->arr_size; i++)
@@ -84,7 +85,7 @@ htab_data_t * htab_find(htab_t * t, htab_key_t key)
     if(t == NULL)
     {
         fprintf(stderr, "%s ---> ERROR: Hash table doesn't exist", __func__ );
-        return NULL;
+        errorExit(COMPILER_INTERN_ERR, 99);
     }
 
     /* If even hash of "key" wasn't found in table, there's no point in looking further */
@@ -116,13 +117,13 @@ bool htab_erase(htab_t * t, htab_key_t key)
     if(t == NULL)
     {
         fprintf(stderr, "%s ---> ERROR: Hash-Table doesn't exist", __func__);
-        return false;
+        errorExit(COMPILER_INTERN_ERR, 99);
     }
 
     if(htab_find(t, key) == NULL)  /* Checks, if item with key == "key" exists in table */
     {
         fprintf(stderr, "%s ---> ERROR: The node you want to delete wasn't found\n", __func__);
-        return false;
+        errorExit(COMPILER_INTERN_ERR, 99);
     }
 
     htab_item_t * buffer = t->itemPtrsArr[(htab_hash_function(key) % t->arr_size)];
@@ -164,7 +165,7 @@ void htab_for_each(const htab_t * t, void (*f)(htab_data_t *data))
     if (t == NULL)
     {
         fprintf(stderr, "%s ---> ERROR: Hash-table doesn't exist", __func__);
-        return;
+        errorExit(COMPILER_INTERN_ERR, 99);
     }
 
     /* Will constantly change in while-cycle */
@@ -188,7 +189,7 @@ void htab_free(htab_t *t)
     if (t == NULL)
     {
         fprintf(stderr, "%s ---> ERROR: No hash-table to be freed.", __func__);
-        return;
+        errorExit(COMPILER_INTERN_ERR, 99);
     }
 
     /* Clears whole table before... */
@@ -205,7 +206,7 @@ htab_t *htab_move(size_t n, htab_t *from)
     if (from == NULL)
     {
         fprintf(stderr, "%s ---> ERROR: Hash-table that you want to move doesn't exist\n", __func__);
-        exit (1);
+        errorExit(COMPILER_INTERN_ERR, 99);
     }
 
     htab_t* to = htab_init(n);  /* LOOK, a new hash-table is born. Nature is amazing... I'm crying... */
@@ -213,7 +214,7 @@ htab_t *htab_move(size_t n, htab_t *from)
     if (to == NULL)
     {
         fprintf(stderr, "%s ---> ERROR: New Hash-Table wasn't initiated\n", __func__);
-        exit (1);
+        errorExit(COMPILER_INTERN_ERR, 99);
     }
 
 
@@ -227,7 +228,7 @@ htab_t *htab_move(size_t n, htab_t *from)
             if(newPair == NULL)
             {
                 fprintf(stderr, "%s ---> ERROR: Allocation of new pair failed\n", __func__);
-                return NULL;
+                errorExit(COMPILER_INTERN_ERR, 99);
             }
             buffer = buffer->next;
         }
@@ -245,8 +246,7 @@ htab_data_t * htab_lookup_add(htab_t * t, htab_key_t key)
 {
     if(t == NULL)
     {
-        fprintf(stderr, "%s ---> ERROR: Hash-Table doesn't exist\n", __func__);
-        return NULL;
+        errorExit(COMPILER_INTERN_ERR, 99);
     }
 
     /* If "key" already exists, returns pointer to pair
@@ -274,7 +274,7 @@ htab_data_t * htab_lookup_add(htab_t * t, htab_key_t key)
     if(new == NULL || new->itemData == NULL || new->itemData->key == NULL)
     {
         fprintf(stderr, "%s ---> ERROR: Unable to create new item\n",__func__);
-        return NULL;
+        errorExit(COMPILER_INTERN_ERR, 99);
     }
 
 
@@ -315,7 +315,7 @@ size_t htab_size(const htab_t * t)
     if (t == NULL)
     {
         fprintf(stderr, "%s ---> ERROR: Hash-table doesn't exist\n", __func__);
-        exit (1);
+        errorExit(COMPILER_INTERN_ERR, 99);
     }
 
     return t->size;
@@ -326,8 +326,8 @@ htab_list_t* initList()
     htab_list_t* list = malloc(sizeof(htab_list_t));
     if(!list)
     {
-        printf("%s ERROR: can't allocate hashtable list! Exit...", __func__);
-        exit(228); // TODO
+        fprintf(stderr, "%s ERROR: can't allocate hashtable list! Exit...", __func__);
+        errorExit(COMPILER_INTERN_ERR, 99);
     }
 
     list->first = NULL;
@@ -339,15 +339,15 @@ htab_list_item_t* createItem(htab_t* toBePacked)
 {
     if(!toBePacked)
     {
-        printf("%s ERROR: You're passing hashtable, that doesn't exist!!! Exit...\n", __func__);
-        exit(228); // TODO
+        fprintf(stderr, "%s ERROR: You're passing hashtable, that doesn't exist!!! Exit...\n", __func__);
+        errorExit(COMPILER_INTERN_ERR, 99);
     }
     htab_list_item_t * newItem = malloc(sizeof(htab_list_item_t));
 
     if(!newItem)
     {
-        printf("%s ERROR: Can't allocate new item of list!!! Exit...\n", __func__);
-        exit(228); // TODO
+        fprintf(stderr, "%s ERROR: Can't allocate new item of list!!! Exit...\n", __func__);
+        errorExit(COMPILER_INTERN_ERR, 99);
     }
 
     newItem->symtable = toBePacked;
@@ -360,8 +360,8 @@ void insertFirst(htab_list_t* list, htab_list_item_t* item)
 {
     if(!list || !item)
     {
-        printf("%s ERROR: can't create first element of hashtable list! Exit...", __func__ );
-        exit(228); // TODO
+        fprintf(stderr, "%s ERROR: can't create first element of hashtable list! Exit...", __func__ );
+        errorExit(COMPILER_INTERN_ERR, 99);
     }
 
     if(!list->first)list->first = item;
@@ -394,8 +394,8 @@ void freeList(htab_list_t* list)
 {
     if(!list)
     {
-        printf("%s ERROR: list doesn't exist!", __func__ );
-        exit(228); // TODO
+        fprintf(stderr,"%s ERROR: list doesn't exist!", __func__ );
+        errorExit(COMPILER_INTERN_ERR, 99);
     }
 
     while(list->first) removeFirst(list);
@@ -407,8 +407,8 @@ htab_data_t* listSearch(htab_list_t* list, htab_key_t key, bool choose)
 {
     if(!list)
     {
-        printf("%s ERROR: list doesn't exist!", __func__ );
-        exit(228); // TODO
+        fprintf(stderr,"%s ERROR: list doesn't exist!", __func__ );
+        errorExit(COMPILER_INTERN_ERR, 99);
     }
 
     htab_list_item_t* inspectorGadget = choose ? list->first->next : list->first;
@@ -441,7 +441,7 @@ htab_data_t* createData(htab_key_t key, variableDatatype_t datatype)
     if(!newData)
     {
         printf("%s ERROR: Unable to create new data! Exit...", __func__);
-        exit(228);
+        errorExit(COMPILER_INTERN_ERR, 99);
     }
     newData->key = key;
     newData->type = TYPE_VARIABLE; // default!!!
@@ -460,6 +460,12 @@ void copyDataFuncCall(htab_data_t* from, htab_data_t* to)
 
     to->funcArgs = malloc(sizeof(htab_data_t) * to->countOfArgs);
     to->funcReturns = malloc(sizeof(htab_data_t) * to->countOfReturns);
+
+    if(to->funcArgs || to->funcReturns)
+    {
+        fprintf(stderr, "ERROR in %s: Memory allocation failed\n", __func__);
+        errorExit(COMPILER_INTERN_ERR, 99);
+    }
 
     for(int i = 0; i < to->countOfArgs; i++)
     {

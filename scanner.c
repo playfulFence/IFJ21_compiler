@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include "scanner.h"
 #include "htab.h"
+#include "error.h"
 
 
 tokenType_t keywordCheck(char* suspect)
@@ -50,6 +51,9 @@ token_t *getToken(FILE *f, DynamicString *dynamicString, StackTokens *tokenStack
     fsmState currentState = START_STATE;
     // char variable to read symbol from input
     char symbol;
+    /* Kirill */
+    int lineCounter = 1;
+    /* Kirill */
     int completeToken = 0;
     // read symbol by symbol until it's not a token
     while (!completeToken)
@@ -59,7 +63,12 @@ token_t *getToken(FILE *f, DynamicString *dynamicString, StackTokens *tokenStack
         switch (currentState) {
             // START_STATE - check next symbol and change state
             case START_STATE:
-                if(isspace(symbol))
+                if(symbol == '\n') /* Kirill */
+                {
+                    lineCounter++;
+                    currentState = START_STATE;
+                } /* Kirill */
+                else if(isspace(symbol))
                 {
                     // skip all whitespaces
                     currentState = START_STATE;
@@ -253,7 +262,9 @@ token_t *getToken(FILE *f, DynamicString *dynamicString, StackTokens *tokenStack
                 }
                 else
                 {
-                    //TODO - ERROR
+                    /*Kirill*/
+                    errorExit(BAD_LEXEM_STRUCT_ERR, lineCounter);
+                    /*Kirill*/
                 }
                 break;
 
@@ -316,7 +327,7 @@ token_t *getToken(FILE *f, DynamicString *dynamicString, StackTokens *tokenStack
                 }
                 else
                 {
-                    // TODO - ERROR
+                    errorExit(BAD_LEXEM_STRUCT_ERR, lineCounter);
                 }
                 break;
 
@@ -416,12 +427,12 @@ token_t *getToken(FILE *f, DynamicString *dynamicString, StackTokens *tokenStack
                     }
                     else
                     {
-                        // ERROR
+                        errorExit(BAD_LEXEM_STRUCT_ERR, lineCounter);
                     }
                 }
                 else
                 {
-                    //ERROR
+                    errorExit(BAD_LEXEM_STRUCT_ERR, lineCounter);
                 }
                 break;
             
@@ -438,12 +449,12 @@ token_t *getToken(FILE *f, DynamicString *dynamicString, StackTokens *tokenStack
                     }
                     else
                     {
-                        // ERROR
+                        errorExit(BAD_LEXEM_STRUCT_ERR, lineCounter);
                     }
                 }
                 else
                 {
-                    // ERROR
+                    errorExit(BAD_LEXEM_STRUCT_ERR, lineCounter);
                 }
                 break;
 
@@ -479,7 +490,7 @@ token_t *getToken(FILE *f, DynamicString *dynamicString, StackTokens *tokenStack
                 }
                 else
                 {
-                    //TODO ERROR
+                    errorExit(BAD_LEXEM_STRUCT_ERR, lineCounter);
                 }
                 break;
 
@@ -554,7 +565,9 @@ token_t *getToken(FILE *f, DynamicString *dynamicString, StackTokens *tokenStack
                 }
                 else
                 {
-                    //TODO - ERROR
+                    /*Kirill*/
+                    errorExit(BAD_LEXEM_STRUCT_ERR, lineCounter);
+                    /*Kirill*/
                 }
                 break;
 
@@ -655,6 +668,7 @@ token_t *getToken(FILE *f, DynamicString *dynamicString, StackTokens *tokenStack
         }
     }
     DynamicStringDispose(dynamicString);
+    newToken->line = lineCounter;
     return newToken;
 }
 
