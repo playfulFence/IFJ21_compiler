@@ -1,370 +1,154 @@
 #include "bottom_up_analysis.h"
-#include "scanner.h"
+#include "string.h"
+#include "stdio.h"
 
-
-
-ptElement ptFromTokenToPTElement(tokenType_t type)
+NoneTerminal transformTokenToNoneTerminal(tokenType_t type)
 {
-    ptElement element;
+    NoneTerminal element;
     switch (type)
     {
         case TOKEN_STRLEN:
-            element = STRLEN;
+            element = NONE_TERMINAL_STRLEN;
             break;
         case TOKEN_MULT:
-            element = MULT;
+            element = NONE_TERMINAL_MULT;
             break;
         case TOKEN_S_BS:
-            element = DIV;
+            element = NONE_TERMINAL_DIV;
             break;
         case TOKEN_D_BS:
-            element = INTDIV;
+            element = NONE_TERMINAL_INTDIV;
             break;
         case TOKEN_PLUS:
-            element = PLUS;
+            element = NONE_TERMINAL_PLUS;
             break;
         case TOKEN_MINUS:
-            element = MINUS;
+            element = NONE_TERMINAL_MINUS;
             break;
         case TOKEN_CONC:
-            element = CONC;
+            element = NONE_TERMINAL_CONC;
             break;
         case TOKEN_LESS:
-            element = LESS;
+            element = NONE_TERMINAL_LESS;
             break;
         case TOKEN_LESS_EQ:
-            element = LEQ;
+            element = NONE_TERMINAL_LEQ;
             break;
         case TOKEN_GREAT:
-            element = GREATER;
+            element = NONE_TERMINAL_GREATER;
             break;
         case TOKEN_GREAT_EQ:
-            element = GEQ;
+            element = NONE_TERMINAL_GEQ;
             break;
         case TOKEN_EQ:
-            element = EQ;
+            element = NONE_TERMINAL_EQ;
             break;
         case TOKEN_NEQ:
-            element = NEQ;
+            element = NONE_TERMINAL_NEQ;
             break;
         case TOKEN_L_BR:
-            element = LB;
+            element = NONE_TERMINAL_LB;
             break;
         case TOKEN_R_BR:
-            element = RB;
+            element = NONE_TERMINAL_RB;
             break;
         case TOKEN_ID:
         case TOKEN_INT:
         case TOKEN_NUM:
         case TOKEN_STR:
-            element = I;
+            element = NONE_TERMINAL_ID;
             break;
         default:
-            element = DOLLAR;
+            element = NONE_TERMINAL_DOLLAR;
             break;
     }
     return element;
 }
 
-void reduceByTheRule(PTStack *ptElementsStack, DynamicString *ruleSequenceString, ptElement first)
+void reduceBinaryRule(NoneTerminal *topNoneTerminal, NoneTerminalStack *stackOfNoneTerminals, DynamicString *ruleSequenceString, char ruleNumber)
 {
-    printf("Rule first element: %d\n", first);
-    ptElement noneTerminal;
-    switch (first)
+    if(popNoneTerminalElement(stackOfNoneTerminals) == NONE_TERMINAL_E)
     {
-    case I: // E --> id
-        printf("1\n");
-        noneTerminal = popPTElement(ptElementsStack);
-        printf("Stack elemnt: %d\n", noneTerminal);
-        if(noneTerminal == I)
+        if(popNoneTerminalElement(stackOfNoneTerminals) == *topNoneTerminal)
         {
-            printf("2\n");
-            noneTerminal = popPTElement(ptElementsStack);
-            if(noneTerminal == REDUCE_FLAG)
+            if(popNoneTerminalElement(stackOfNoneTerminals) == NONE_TERMINAL_E)
             {
-                printf("3\n");
-                pushPTElement(ptElementsStack, E);
-                DynamicStringInsertLast(ruleSequenceString, '0');
+                *topNoneTerminal = stackOfNoneTerminals->top->element;
+                pushNoneTerminalElement(stackOfNoneTerminals, NONE_TERMINAL_E);
+                DynamicStringInsertLast(ruleSequenceString, ruleNumber);
+                return;
+            }
+        }
+    }
+}
+
+void reduceByTheRule(NoneTerminal *topNoneTerminal, NoneTerminalStack *stackOfNoneTerminals, DynamicString *ruleSequenceString)
+{
+    switch (*topNoneTerminal)
+    {
+    case NONE_TERMINAL_ID: // E --> id
+        popNoneTerminalElement(stackOfNoneTerminals);
+        *topNoneTerminal = stackOfNoneTerminals->top->element;
+        pushNoneTerminalElement(stackOfNoneTerminals, NONE_TERMINAL_E);
+        DynamicStringInsertLast(ruleSequenceString, '0');
+        break;
+    case NONE_TERMINAL_STRLEN: // E --> #E
+        if(popNoneTerminalElement(stackOfNoneTerminals) == NONE_TERMINAL_E)
+        {
+            if(popNoneTerminalElement(stackOfNoneTerminals) == NONE_TERMINAL_STRLEN)
+            {
+                *topNoneTerminal = stackOfNoneTerminals->top->element;
+                pushNoneTerminalElement(stackOfNoneTerminals, NONE_TERMINAL_E);
+                DynamicStringInsertLast(ruleSequenceString, '1');
             }
         }
         break;
-    case STRLEN: // E --> #E
-        printf("hmmmmmmmmm\n");
-        noneTerminal = popPTElement(ptElementsStack);
-        printf("hmmmmmmmmm\n");
-        if(noneTerminal == E)
-        {
-            printf("hmmmmmmmmm\n");
-            noneTerminal = popPTElement(ptElementsStack);
-            if(noneTerminal == STRLEN)
-            {
-                printf("hmmmmmmmmm\n");
-                noneTerminal = popPTElement(ptElementsStack);
-                if(noneTerminal == REDUCE_FLAG)
-                {
-                    printf("hmmmmmmmmm\n");
-                    pushPTElement(ptElementsStack, E);
-                    DynamicStringInsertLast(ruleSequenceString, '1');
-                }
-            }
-        }
+    case NONE_TERMINAL_MULT: // E --> E*E
+        reduceBinaryRule(topNoneTerminal, stackOfNoneTerminals, ruleSequenceString, '2');
         break;
-    case MULT: // E --> E*E
-        noneTerminal = popPTElement(ptElementsStack);
-        if(noneTerminal == E)
-        {
-            noneTerminal = popPTElement(ptElementsStack);
-            if(noneTerminal == MULT)
-            {
-                noneTerminal = popPTElement(ptElementsStack);
-                if(noneTerminal == E)
-                {
-                    noneTerminal = popPTElement(ptElementsStack);
-                    if(noneTerminal == REDUCE_FLAG)
-                    {
-                        pushPTElement(ptElementsStack, E);
-                        DynamicStringInsertLast(ruleSequenceString, '2');
-                    }                    
-                }
-            }
-        }
+    case NONE_TERMINAL_DIV: // E --> E/E
+        reduceBinaryRule(topNoneTerminal, stackOfNoneTerminals, ruleSequenceString, '3');
         break;
-    case DIV: // E --> E/E
-        noneTerminal = popPTElement(ptElementsStack);
-        if(noneTerminal == E)
-        {
-            noneTerminal = popPTElement(ptElementsStack);
-            if(noneTerminal == DIV)
-            {
-                noneTerminal = popPTElement(ptElementsStack);
-                if(noneTerminal == E)
-                {
-                    noneTerminal = popPTElement(ptElementsStack);
-                    if(noneTerminal == REDUCE_FLAG)
-                    {
-                        pushPTElement(ptElementsStack, E);
-                        DynamicStringInsertLast(ruleSequenceString, '3');
-                    }                    
-                }
-            }
-        }
+    case NONE_TERMINAL_INTDIV: // E --> E//E
+        reduceBinaryRule(topNoneTerminal, stackOfNoneTerminals, ruleSequenceString, '4');
         break;
-    case INTDIV: // E --> E//E
-        noneTerminal = popPTElement(ptElementsStack);
-        if(noneTerminal == E)
-        {
-            noneTerminal = popPTElement(ptElementsStack);
-            if(noneTerminal == INTDIV)
-            {
-                noneTerminal = popPTElement(ptElementsStack);
-                if(noneTerminal == E)
-                {
-                    noneTerminal = popPTElement(ptElementsStack);
-                    if(noneTerminal == REDUCE_FLAG)
-                    {
-                        pushPTElement(ptElementsStack, E);
-                        DynamicStringInsertLast(ruleSequenceString, '4');
-                    }                    
-                }
-            }
-        }
+    case NONE_TERMINAL_PLUS: // E --> E+E
+        reduceBinaryRule(topNoneTerminal, stackOfNoneTerminals, ruleSequenceString, '5');
         break;
-    case PLUS: // E --> E+E
-        noneTerminal = popPTElement(ptElementsStack);
-        if(noneTerminal == E)
-        {
-            noneTerminal = popPTElement(ptElementsStack);
-            if(noneTerminal == PLUS)
-            {
-                noneTerminal = popPTElement(ptElementsStack);
-                if(noneTerminal == E)
-                {
-                    noneTerminal = popPTElement(ptElementsStack);
-                    if(noneTerminal == REDUCE_FLAG)
-                    {
-                        pushPTElement(ptElementsStack, E);
-                        DynamicStringInsertLast(ruleSequenceString, '5');
-                    }                    
-                }
-            }
-        }
+    case NONE_TERMINAL_MINUS: // E --> E-E
+        reduceBinaryRule(topNoneTerminal, stackOfNoneTerminals, ruleSequenceString, '6');
         break;
-    case MINUS: // E --> E-E
-        noneTerminal = popPTElement(ptElementsStack);
-        if(noneTerminal == E)
-        {
-            noneTerminal = popPTElement(ptElementsStack);
-            if(noneTerminal == MINUS)
-            {
-                noneTerminal = popPTElement(ptElementsStack);
-                if(noneTerminal == E)
-                {
-                    noneTerminal = popPTElement(ptElementsStack);
-                    if(noneTerminal == REDUCE_FLAG)
-                    {
-                        pushPTElement(ptElementsStack, E);
-                        DynamicStringInsertLast(ruleSequenceString, '6');
-                    }                    
-                }
-            }
-        }
+    case NONE_TERMINAL_CONC: // E --> E..E
+        reduceBinaryRule(topNoneTerminal, stackOfNoneTerminals, ruleSequenceString, '7');
         break;
-    case CONC: // E --> E..E
-        noneTerminal = popPTElement(ptElementsStack);
-        if(noneTerminal == E)
-        {
-            noneTerminal = popPTElement(ptElementsStack);
-            if(noneTerminal == CONC)
-            {
-                noneTerminal = popPTElement(ptElementsStack);
-                if(noneTerminal == E)
-                {
-                    noneTerminal = popPTElement(ptElementsStack);
-                    if(noneTerminal == REDUCE_FLAG)
-                    {
-                        pushPTElement(ptElementsStack, E);
-                        DynamicStringInsertLast(ruleSequenceString, '7');
-                    }                    
-                }
-            }
-        }
+    case NONE_TERMINAL_LESS: // E --> E<E
+        reduceBinaryRule(topNoneTerminal, stackOfNoneTerminals, ruleSequenceString, '8');
         break;
-    case LESS: // E --> E<E
-        noneTerminal = popPTElement(ptElementsStack);
-        if(noneTerminal == E)
-        {
-            noneTerminal = popPTElement(ptElementsStack);
-            if(noneTerminal == LESS)
-            {
-                noneTerminal = popPTElement(ptElementsStack);
-                if(noneTerminal == E)
-                {
-                    noneTerminal = popPTElement(ptElementsStack);
-                    if(noneTerminal == REDUCE_FLAG)
-                    {
-                        pushPTElement(ptElementsStack, E);
-                        DynamicStringInsertLast(ruleSequenceString, '8');
-                    }                    
-                }
-            }
-        }
+    case NONE_TERMINAL_LEQ: // E --> E<=E
+        reduceBinaryRule(topNoneTerminal, stackOfNoneTerminals, ruleSequenceString, '9');
         break;
-    case LEQ: // E --> E<=E
-        noneTerminal = popPTElement(ptElementsStack);
-        if(noneTerminal == E)
-        {
-            noneTerminal = popPTElement(ptElementsStack);
-            if(noneTerminal == LEQ)
-            {
-                noneTerminal = popPTElement(ptElementsStack);
-                if(noneTerminal == E)
-                {
-                    noneTerminal = popPTElement(ptElementsStack);
-                    if(noneTerminal == REDUCE_FLAG)
-                    {
-                        pushPTElement(ptElementsStack, E);
-                        DynamicStringInsertLast(ruleSequenceString, '9');
-                    }                    
-                }
-            }
-        }
+    case NONE_TERMINAL_GREATER: // E --> E>E
+        reduceBinaryRule(topNoneTerminal, stackOfNoneTerminals, ruleSequenceString, 'A');
         break;
-    case GREATER: // E --> E>E
-        noneTerminal = popPTElement(ptElementsStack);
-        if(noneTerminal == E)
-        {
-            noneTerminal = popPTElement(ptElementsStack);
-            if(noneTerminal == GREATER)
-            {
-                noneTerminal = popPTElement(ptElementsStack);
-                if(noneTerminal == E)
-                {
-                    noneTerminal = popPTElement(ptElementsStack);
-                    if(noneTerminal == REDUCE_FLAG)
-                    {
-                        pushPTElement(ptElementsStack, E);
-                        DynamicStringInsertLast(ruleSequenceString, 'A');
-                    }                    
-                }
-            }
-        }
+    case NONE_TERMINAL_GEQ: // E --> E>=E
+        reduceBinaryRule(topNoneTerminal, stackOfNoneTerminals, ruleSequenceString, 'B');
         break;
-    case GEQ: // E --> E>=E
-        noneTerminal = popPTElement(ptElementsStack);
-        if(noneTerminal == E)
-        {
-            noneTerminal = popPTElement(ptElementsStack);
-            if(noneTerminal == GEQ)
-            {
-                noneTerminal = popPTElement(ptElementsStack);
-                if(noneTerminal == E)
-                {
-                    noneTerminal = popPTElement(ptElementsStack);
-                    if(noneTerminal == REDUCE_FLAG)
-                    {
-                        pushPTElement(ptElementsStack, E);
-                        DynamicStringInsertLast(ruleSequenceString, 'B');
-                    }                    
-                }
-            }
-        }
+    case NONE_TERMINAL_EQ: // E --> E==E
+        reduceBinaryRule(topNoneTerminal, stackOfNoneTerminals, ruleSequenceString, 'C');
         break;
-    case EQ: // E --> E==E
-        noneTerminal = popPTElement(ptElementsStack);
-        if(noneTerminal == E)
-        {
-            noneTerminal = popPTElement(ptElementsStack);
-            if(noneTerminal == EQ)
-            {
-                noneTerminal = popPTElement(ptElementsStack);
-                if(noneTerminal == E)
-                {
-                    noneTerminal = popPTElement(ptElementsStack);
-                    if(noneTerminal == REDUCE_FLAG)
-                    {
-                        pushPTElement(ptElementsStack, E);
-                        DynamicStringInsertLast(ruleSequenceString, 'C');
-                    }                    
-                }
-            }
-        }
+    case NONE_TERMINAL_NEQ: // E --> E~=E
+        reduceBinaryRule(topNoneTerminal, stackOfNoneTerminals, ruleSequenceString, 'D');
         break;
-    case NEQ: // E --> E~=E
-        noneTerminal = popPTElement(ptElementsStack);
-        if(noneTerminal == E)
+    case NONE_TERMINAL_RB: // E --> (E)
+        if(popNoneTerminalElement(stackOfNoneTerminals) == NONE_TERMINAL_RB)
         {
-            noneTerminal = popPTElement(ptElementsStack);
-            if(noneTerminal == NEQ)
+            if(popNoneTerminalElement(stackOfNoneTerminals) == NONE_TERMINAL_E)
             {
-                noneTerminal = popPTElement(ptElementsStack);
-                if(noneTerminal == E)
+                if(popNoneTerminalElement(stackOfNoneTerminals) == NONE_TERMINAL_LB)
                 {
-                    noneTerminal = popPTElement(ptElementsStack);
-                    if(noneTerminal == REDUCE_FLAG)
-                    {
-                        pushPTElement(ptElementsStack, E);
-                        DynamicStringInsertLast(ruleSequenceString, 'D');
-                    }                    
-                }
-            }
-        }
-        break;
-    case RB: // E --> (E)
-        noneTerminal = popPTElement(ptElementsStack);
-        if(noneTerminal == RB)
-        {
-            noneTerminal = popPTElement(ptElementsStack);
-            if(noneTerminal == E)
-            {
-                noneTerminal = popPTElement(ptElementsStack);
-                if(noneTerminal == LB)
-                {
-                    noneTerminal = popPTElement(ptElementsStack);
-                    if(noneTerminal == REDUCE_FLAG)
-                    {
-                        pushPTElement(ptElementsStack, E);
-                        DynamicStringInsertLast(ruleSequenceString, 'E');
-                    }                    
+                    *topNoneTerminal = stackOfNoneTerminals->top->element;
+                    pushNoneTerminalElement(stackOfNoneTerminals, NONE_TERMINAL_E);
+                    DynamicStringInsertLast(ruleSequenceString, 'E');
                 }
             }
         }
@@ -374,121 +158,329 @@ void reduceByTheRule(PTStack *ptElementsStack, DynamicString *ruleSequenceString
     }
 }
 
-void shiftElement(StackTokens *tokensStack, PTStack *ptElementsStack, token_t token, ptElement second)
+void shiftElement(token_t *expressionToken, NoneTerminal nextNoneTerminal, StackTokens *stackOfVaruables, NoneTerminalStack *stackOfNoneTerminals)
 {
-    ptElement noneTerminal;
-    switch (second)
+    pushNoneTerminalElement(stackOfNoneTerminals, nextNoneTerminal);
+    if(expressionToken->type == TOKEN_STR || expressionToken->type == TOKEN_INT || expressionToken->type == TOKEN_NUM || expressionToken->type == TOKEN_ID)
     {
-    case I:
-        // Push reduce flag and  I, and also push token to token stack
-        printf("push I\n");
-        pushPTElement(ptElementsStack, REDUCE_FLAG);
-        pushPTElement(ptElementsStack, second);
-        pushToken(tokensStack, token);
+        if(expressionToken->type == TOKEN_ID)
+        {
+            // TODO find variable by id, change expression token type to INT/NUM/STR and set value INT/NUM/STR/NIL
+            // maybe if variable has NIL value it's error, because you can't use undefined variable 
+        }
+        pushTokenStackTokens(stackOfVaruables, expressionToken);
+    }
+    
+}
+
+void buildTreeFromRuleSequence(ast_node *node, DynamicString *ruleSequenceString, StackTokens *stackOfVariables)
+{
+    printDynamicString(ruleSequenceString);
+    if(ruleSequenceString->firstSymbol->symbol == '0')
+    {
+        node->nodeType = NODE_ID;
+        token_t *token = popTokenStackTokens(stackOfVariables);
+        switch (token->type)
+        {
+        case TOKEN_NUM:
+            node->nodeData.doubleData = token->data.tokenNumVal;
+            break;
+        case TOKEN_INT:
+            node->nodeData.intData = token->data.tokenIntVal;   
+            break;
+        case TOKEN_STR:
+            //strcpy(node->nodeData.stringData, token->data.tokenStringVal);
+            printf("aaaaaaaa: %s\n", token->data.tokenStringVal);
+            node->nodeData.stringData = token->data.tokenStringVal;
+            printf("aaaaaaaa: %s\n", node->nodeData.stringData);
+            break;
+        default:
+            break;
+        }
+        ruleSequenceString->firstSymbol = ruleSequenceString->firstSymbol->nextSymbol;
+        return;
+    }
+    else if(ruleSequenceString->firstSymbol->symbol == '1')
+    {
+        node->nodeType = NODE_STRLEN;
+        ast_node *str = make_new_node();
+        make_new_child(node, str);
+        ruleSequenceString->firstSymbol = ruleSequenceString->firstSymbol->nextSymbol;
+        buildTreeFromRuleSequence(node->childrenNodes[0], ruleSequenceString, stackOfVariables);
+    }
+    else
+    {
+        if(ruleSequenceString->firstSymbol->symbol == 'E')
+        {
+            ruleSequenceString->firstSymbol = ruleSequenceString->firstSymbol->nextSymbol;    
+        }
+        switch (ruleSequenceString->firstSymbol->symbol)
+        {
+        case '2':
+            node->nodeType = NODE_MULT;
+            break;
+        case '3':
+            node->nodeType = NODE_DIV;
+            break;
+        case '4':
+            node->nodeType = NODE_INTDIV;
+            break;
+        case '5':
+            node->nodeType = NODE_PLUS;
+            break;
+        case '6':
+            node->nodeType = NODE_MINUS;
+            break;
+        case '7':
+            node->nodeType = NODE_CONC;
+            break;
+        case '8':
+            node->nodeType = NODE_LESS;
+            break;
+        case '9':
+            node->nodeType = NODE_LEQ;
+            break;
+        case 'A':
+            node->nodeType = NODE_GREATER;
+            break;
+        case 'B':
+            node->nodeType = NODE_GEQ;
+            break;
+        case 'C':
+            node->nodeType = NODE_EQUAL;
+            break;
+        case 'D':
+            node->nodeType = NODE_NEQ;
+            break;
+        default:
+            break;
+        }
+        ast_node *left = make_new_node();
+        ast_node *right = make_new_node();
+        make_new_child(node, left);
+        make_new_child(node, right);
+        ruleSequenceString->firstSymbol = ruleSequenceString->firstSymbol->nextSymbol;
+        buildTreeFromRuleSequence(node->childrenNodes[1], ruleSequenceString, stackOfVariables);
+        buildTreeFromRuleSequence(node->childrenNodes[0], ruleSequenceString, stackOfVariables);
+    }
+    
+}
+
+void expressionSemCheck(ast_node *leftOperand, ast_node *rightOperand, treeNodeType operatorType)
+{
+    // TODO check datatypes of operands for every type of operator
+    // think about changing INT to NUM if it's legal for some of the operators(search information in google doc)
+}
+
+void processNode(ast_node *node)
+{
+    switch (node->nodeType)
+    {
+    case NODE_STRLEN:
+        //printf("test2: %s\n", node->childrenNodes[0]->nodeData.stringData);
+        expressionSemCheck(node->childrenNodes[0], NULL, NODE_STRLEN);
+        node->nodeData.intData = strlen(node->childrenNodes[0]->nodeData.stringData);
+        //printf("test3\n");
         break;
-    case STRLEN:
-        printf("psuh strlen\n");
-        pushPTElement(ptElementsStack, REDUCE_FLAG);
-        pushPTElement(ptElementsStack, second);
+    case NODE_PLUS:
+        expressionSemCheck(node->childrenNodes[0], node->childrenNodes[1], NODE_PLUS);
+        node->nodeData.intData = node->childrenNodes[0]->nodeData.intData + node->childrenNodes[1]->nodeData.intData;
         break;
-    case LB:
-        // Push reduce flag and LB
-        pushPTElement(ptElementsStack, REDUCE_FLAG);
-        pushPTElement(ptElementsStack, second);
+    case NODE_MINUS:
+        expressionSemCheck(node->childrenNodes[0], node->childrenNodes[1], NODE_MINUS);
+        node->nodeData.intData = node->childrenNodes[0]->nodeData.intData - node->childrenNodes[1]->nodeData.intData;
         break;
-    case RB:
-        // Push RB
-        pushPTElement(ptElementsStack, second);
+    case NODE_MULT:
+        expressionSemCheck(node->childrenNodes[0], node->childrenNodes[1], NODE_MULT);
+        node->nodeData.intData = node->childrenNodes[0]->nodeData.intData * node->childrenNodes[1]->nodeData.intData;
+        break;
+    case NODE_DIV:
+        expressionSemCheck(node->childrenNodes[0], node->childrenNodes[1], NODE_DIV);
+        node->nodeData.intData = node->childrenNodes[0]->nodeData.intData / node->childrenNodes[1]->nodeData.intData;
+        break;
+    case NODE_INTDIV:
+        expressionSemCheck(node->childrenNodes[0], node->childrenNodes[1], NODE_INTDIV);
+        node->nodeData.intData = node->childrenNodes[0]->nodeData.intData / node->childrenNodes[1]->nodeData.intData;
+        break;
+    case NODE_CONC:
+        expressionSemCheck(node->childrenNodes[0], node->childrenNodes[1], NODE_CONC);
+        node->nodeData.stringData = strcat(node->childrenNodes[0]->nodeData.stringData, node->childrenNodes[2]->nodeData.stringData);
+        break;
+    case NODE_LESS:
+        expressionSemCheck(node->childrenNodes[0], node->childrenNodes[1], NODE_LESS);
+        if(node->childrenNodes[0]->nodeData.intData < node->childrenNodes[1]->nodeData.intData)
+        {
+            node->nodeData.intData = 1;
+        }
+        else
+        {
+            node->nodeData.intData = 0;
+        }
+        break;
+    case NODE_LEQ:
+        expressionSemCheck(node->childrenNodes[0], node->childrenNodes[1], NODE_LEQ);
+        if(node->childrenNodes[0]->nodeData.intData <= node->childrenNodes[1]->nodeData.intData)
+        {
+            node->nodeData.intData = 1;
+        }
+        else
+        {
+            node->nodeData.intData = 0;
+        }
+        break;
+    case NODE_GREATER:
+        expressionSemCheck(node->childrenNodes[0], node->childrenNodes[1], NODE_GREATER);
+        if(node->childrenNodes[0]->nodeData.intData > node->childrenNodes[1]->nodeData.intData)
+        {
+            node->nodeData.intData = 1;
+        }
+        else
+        {
+            node->nodeData.intData = 0;
+        }
+        break;
+    case NODE_GEQ:
+        expressionSemCheck(node->childrenNodes[0], node->childrenNodes[1], NODE_GEQ);
+        if(node->childrenNodes[0]->nodeData.intData >= node->childrenNodes[1]->nodeData.intData)
+        {
+            node->nodeData.intData = 1;
+        }
+        else
+        {
+            node->nodeData.intData = 0;
+        }
+        break;
+    case NODE_NEQ:
+        expressionSemCheck(node->childrenNodes[0], node->childrenNodes[1], NODE_NEQ);
+        if(node->childrenNodes[0]->nodeData.intData != node->childrenNodes[1]->nodeData.intData)
+        {
+            node->nodeData.intData = 1;
+        }
+        else
+        {
+            node->nodeData.intData = 0;
+        }
+        break;
+    case NODE_EQUAL:
+        expressionSemCheck(node->childrenNodes[0], node->childrenNodes[1], NODE_EQUAL);
+        if(node->childrenNodes[0]->nodeData.intData == node->childrenNodes[1]->nodeData.intData)
+        {
+            node->nodeData.intData = 1;
+        }
+        else
+        {
+            node->nodeData.intData = 0;
+        }
         break;
     default:
-        // Get E from stack
-        noneTerminal = popPTElement(ptElementsStack);
-        // push reduce flag
-        pushPTElement(ptElementsStack, REDUCE_FLAG);
-        // push E
-        pushPTElement(ptElementsStack, noneTerminal);
-        // push operator
-        pushPTElement(ptElementsStack, second);
         break;
+    }
+    freeChildrenNodes(node);
+}
+
+void simplifyTheTree(ast_node *node)
+{
+    if(node->nodeType == NODE_ID)
+    {
+        return;
+    }
+    else if(node->nodeType == NODE_STRLEN)
+    {
+        printf("test\n");
+        simplifyTheTree(node->childrenNodes[0]);
+        processNode(node);
+    }
+    else
+    {
+        simplifyTheTree(node->childrenNodes[0]);
+        simplifyTheTree(node->childrenNodes[1]);
+        processNode(node);
     }
 }
 
-void bottomUpAnalysis(token_t token, FILE *f)
-{
-    // initialize stack for tokens
-    StackTokens tokensStack;
-    initStackTokens(&tokensStack);
-    // initialize stack for precedence table elements
-    PTStack ptElementsStack;
-    initStackPTElements(&ptElementsStack);
-
-    // pls help me
-    PTStack hope;
-    initStackPTElements(&hope);
-
-    // initialize dynamic string for rule sequence 
+ast_node *bottomUpAnalysis(htab_list_t* hashTableList, FILE *f, DynamicString *dynamicString, StackTokens *tokenStack)
+{   
+    // create new node, that will be return with all information about final value of expression 
+    ast_node *returnExpressionNode = make_new_node();
+    // create stack for operands(IDs/consts)
+    StackTokens stackOfVariables;
+    initStackTokens(&stackOfVariables);
+    // create stack for none terminals
+    NoneTerminalStack stackOfNoneTerminals;
+    initNoneTerminalStack(&stackOfNoneTerminals);
+    // create string for rule sequence
     DynamicString ruleSequenceString;
     DynamicStringInit(&ruleSequenceString);
-    // variable for the top element of precedence table elements stack
-    ptElement ptStackTopElement;
-    // variable for next element
-    ptElement nextElement;
-    // variable for previous element
-    ptElement previousElement;
-    // push $ to the precedence table elements stack
-    pushPTElement(&ptElementsStack, DOLLAR);
+    // token for expression elements
+    token_t *expressionToken;
+    // none terminal for stack of none terminals
+    NoneTerminal nextNoneTerminal;
+    NoneTerminal topNoneTerminal;
 
-    pushPTElement(&hope, DOLLAR);
+    // start process expression
+    int ruleSequenceIsNotReady = 1; 
+    // push $ none terminal to the stack of none terminals, it is bottom of the stack
+    pushNoneTerminalElement(&stackOfNoneTerminals, NONE_TERMINAL_DOLLAR);
+    topNoneTerminal = stackOfNoneTerminals.top->element;
+    expressionToken = getToken(f, dynamicString, tokenStack);
+    nextNoneTerminal = transformTokenToNoneTerminal(expressionToken->type);
 
-    ptStackTopElement = DOLLAR;
-    previousElement = DOLLAR;
-    nextElement = ptFromTokenToPTElement(token.type);
-    while(1)
+    // main cycle that processes expression 
+    while(ruleSequenceIsNotReady)
     {
-         printf("----previousElement: %d\n nextElement: %d\n stackTopElement: %d\n\n", previousElement, nextElement, ptStackTopElement);
-        if(nextElement == DOLLAR && ptStackTopElement == DOLLAR)
+        switch (precedenceTable[topNoneTerminal][nextNoneTerminal]) // check rule in precedece table 
         {
-            // end of expression, need to check if there is not error
-            // we should have sequence of rules
-            // go out from cycle and work with sequence and tree
-            printf("END of EXPRESSION\n");
-            char *strRule = DynamicStringToString(&ruleSequenceString);
-            printf("ruleSequence: %s\n", strRule);
-            exit(2);
-        }
-        if(precedenceTable[ptStackTopElement][nextElement] == 0)
-        {
-            printf("No rule\n");
-        }
-        else if(precedenceTable[ptStackTopElement][nextElement] == 1)
-        {
-            printf("reduce\n");
-            reduceByTheRule(&ptElementsStack, &ruleSequenceString, ptStackTopElement);
-            popPTElement(&hope);
-            ptStackTopElement = popPTElement(&hope);
-            pushPTElement(&hope, ptStackTopElement);
+            case 0: // no rule
+                
+                if(topNoneTerminal == NONE_TERMINAL_DOLLAR && nextNoneTerminal == NONE_TERMINAL_DOLLAR)
+                {
+                  ruleSequenceIsNotReady = 0;  
+                }
+                else
+                {
+                    printf("error");
+                    exit(1);
+                }
+                break;
+            
+            case 1: // reduce by the rule
+                printf("Make reduce!!! Top is: %d\n", topNoneTerminal);
+                reduceByTheRule(&topNoneTerminal, &stackOfNoneTerminals, &ruleSequenceString);
+                continue;
 
-            continue;
-        }
-        else if(precedenceTable[ptStackTopElement][nextElement] == 2)
-        {
-            printf("shift\n");
-            shiftElement(&tokensStack, &ptElementsStack, token, nextElement);
-            //
-            pushPTElement(&hope, nextElement);
+            case 2: // shift 
+                printf("Make shift!!! Top is: %d\n", topNoneTerminal);
+                shiftElement(expressionToken, nextNoneTerminal, &stackOfVariables, &stackOfNoneTerminals);
+                topNoneTerminal = stackOfNoneTerminals.top->element;
+                break;
 
-            ptStackTopElement = nextElement;
+            case 3: // equal
+                shiftElement(expressionToken, nextNoneTerminal, &stackOfVariables, &stackOfNoneTerminals);
+                topNoneTerminal = stackOfNoneTerminals.top->element;
+                break;    
+            default:
+                break;   
         }
-        else if(precedenceTable[ptStackTopElement][nextElement] == 3)
-        {
-            shiftElement(&tokensStack, &ptElementsStack, token, nextElement);
-            //
-            pushPTElement(&hope, nextElement);
-
-            ptStackTopElement = nextElement;
-        }
-        token = getToken(f);
-        nextElement = ptFromTokenToPTElement(token.type);
+        expressionToken = getToken(f, dynamicString, tokenStack);
+        nextNoneTerminal = transformTokenToNoneTerminal(expressionToken->type);
     }
-
+    
+    // reversed rule sequence string 
+    DynamicString reversedRuleSequenceString;
+    DynamicStringInit(&reversedRuleSequenceString);
+    DynamicStringReverse(&ruleSequenceString, &reversedRuleSequenceString);
+    printDynamicString(&ruleSequenceString);
+    DynamicStringDispose(&ruleSequenceString);
+    printDynamicString(&reversedRuleSequenceString);
+    // printf("%d\n", popTokenStackTokens(&stackOfVariables)->data.tokenIntVal);
+    // printf("%d\n", popTokenStackTokens(&stackOfVariables)->data.tokenIntVal);
+    //printf("%d\n", popTokenStackTokens(&stackOfVariables)->data.tokenIntVal);
+    ast_node *expressionTree = make_new_node();
+    buildTreeFromRuleSequence(expressionTree, &reversedRuleSequenceString, &stackOfVariables);
+    printAST(expressionTree);
+    simplifyTheTree(expressionTree);
+    expressionTree->nodeType = NODE_ID;
+    printAST(expressionTree);
+    return returnExpressionNode;
 }
+

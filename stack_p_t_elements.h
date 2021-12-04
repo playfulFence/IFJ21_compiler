@@ -3,52 +3,51 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-//#include "bottom_up_analysis.h"
 
 // elements that are used for bottom-up analysis
-typedef enum ptElements
+typedef enum noneTerminals
 {
-    STRLEN,
-    MULT,
-    DIV,
-    INTDIV,
-    PLUS,
-    MINUS,
-    CONC,
-    LESS,
-    LEQ,
-    GREATER,
-    GEQ,
-    EQ,
-    NEQ,
-    LB,
-    RB,
-    I,
-    DOLLAR,
-    REDUCE_FLAG,
-    E
-} ptElement;
+    NONE_TERMINAL_STRLEN,
+    NONE_TERMINAL_MULT,
+    NONE_TERMINAL_DIV,
+    NONE_TERMINAL_INTDIV,
+    NONE_TERMINAL_PLUS,
+    NONE_TERMINAL_MINUS,
+    NONE_TERMINAL_CONC,
+    NONE_TERMINAL_LESS,
+    NONE_TERMINAL_LEQ,
+    NONE_TERMINAL_GREATER,
+    NONE_TERMINAL_GEQ,
+    NONE_TERMINAL_EQ,
+    NONE_TERMINAL_NEQ,
+    NONE_TERMINAL_LB,
+    NONE_TERMINAL_RB,
+    NONE_TERMINAL_ID,
+    NONE_TERMINAL_DOLLAR,
+    NONE_TERMINAL_REDUCE_FLAG,
+    NONE_TERMINAL_E
+} NoneTerminal;
 
 // Element structure
-typedef struct ptElementtt
+typedef struct noneTerminalElement
 {
-    ptElement element;
-    struct ptElementtt *nextElement;
-} *ptElementPtr;
+    NoneTerminal element;
+    struct noneTerminalElement *nextElement;
+} *NoneTerminalElementPtr;
 
 // Stack structure
 typedef struct precedenceTableStack
 {
-    ptElementPtr top; 
-} PTStack;
+    NoneTerminalElementPtr top; 
+} NoneTerminalStack;
 
 // Function to initialize the stack
-void initStackPTElements(PTStack*);
+void initNoneTerminalStack(NoneTerminalStack*);
 // Function to push a new element to the stack 
-void pushPTElement(PTStack*, ptElement);
+void pushNoneTerminalElement(NoneTerminalStack*, NoneTerminal);
 // Function to pop an element from the stack
-ptElement popPTElement(PTStack*);
+NoneTerminal popNoneTerminalElement(NoneTerminalStack*);
 // Function to destroy the stack 
-void destroyPTStack(PTStack*);
+void destroyNoneTerminalStack(NoneTerminalStack*);
 
 #endif // __STACK_P_T_ELEMENTS__H__

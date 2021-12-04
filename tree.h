@@ -21,6 +21,7 @@ typedef enum treeNodeTypes
     NODE_EQUAL,    // ==
     NODE_NEQ,      // ~=
     NODE_ID,       // ID
+    NODE_STRLEN,   // #
     NODE_FUNC_DEF,  //
     NODE_FUNC_DEF_PARAM_LIST,
     NODE_FUNC_DEF_RETURN_DATATYPES_LIST,
@@ -53,7 +54,6 @@ typedef enum treeNodeTypes
     NODE_MULTIPLE_ASSIGN,
     NODE_PROG
 }treeNodeType;
-
 typedef struct abstract_syntax_tree_node
 {
     treeNodeType nodeType; // Type of the node
@@ -76,6 +76,8 @@ void make_new_child(ast_node *parentNode, ast_node *newChild);
 void printAST(ast_node *ast);
 
 void print_nodes(ast_node *ast, int indent);
+
+void freeChildrenNodes(ast_node *);
 
 
 

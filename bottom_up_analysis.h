@@ -7,6 +7,7 @@
 #include "dynamic_string.h"
 #include "tree.h"
 
+
 // precedence table for bottom-up analysis 
 // 0 - no rule
 // 1 - >
@@ -54,14 +55,7 @@ typedef enum ptRulese
     ERROR        // Ooops, I'm sorry but I don't know this rule:(
 } ptRule;
 
-
-
-// function that transform token type to precedece table element
-ptElement ptFromTokenToPTElement(tokenType_t);
-
-void reduceByTheRule(PTStack *, DynamicString *, ptElement);
-
 // main function for bottom-up analysis 
-void bottomUpAnalysis(token_t, FILE *);
+ast_node *bottomUpAnalysis(htab_list_t* , FILE *, DynamicString *, StackTokens *);
 
 #endif // __BOTTOM_UP_ANALYSIS__

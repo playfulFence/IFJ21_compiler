@@ -1,16 +1,14 @@
 #include "stack_p_t_elements.h"
-//#include "bottom_up_analysis.h"
-
 
 // Function to initialize the stack
-void initStackPTElements(PTStack* stack)
+void initNoneTerminalStack(NoneTerminalStack* stack)
 {
     stack->top = NULL;
 }
 // Function to push a new element to the stack 
-void pushPTElement(PTStack* stack, ptElement element)
+void pushNoneTerminalElement(NoneTerminalStack* stack, NoneTerminal element)
 {
-    ptElementPtr newElement = malloc(sizeof(ptElementPtr));
+    NoneTerminalElementPtr newElement = malloc(sizeof(NoneTerminalElementPtr));
     newElement->element = element;
     newElement->nextElement = NULL;
     if(stack->top == NULL)
@@ -24,9 +22,9 @@ void pushPTElement(PTStack* stack, ptElement element)
     }
 }
 // Function to pop an element from the stack
-ptElement popPTElement(PTStack* stack)
+NoneTerminal popNoneTerminalElement(NoneTerminalStack* stack)
 {
-    ptElement element;
+    NoneTerminal element;
     if(stack->top->nextElement == NULL)
     {
         element = stack->top->element;
@@ -35,7 +33,7 @@ ptElement popPTElement(PTStack* stack)
     }
     else
     {
-        ptElementPtr tmp = stack->top;
+        NoneTerminalElementPtr tmp = stack->top;
         element = tmp->element;
         stack->top = tmp->nextElement;
         free(tmp);
@@ -43,10 +41,10 @@ ptElement popPTElement(PTStack* stack)
     return element;
 }
 // Function to destroy the stack 
-void destroyPTStack(PTStack* stack)
+void destroyNoneTerminalStack(NoneTerminalStack* stack)
 {
     while (stack->top != NULL)
     {
-        popPTElement(stack);
+        popNoneTerminalElement(stack);
     } 
 }

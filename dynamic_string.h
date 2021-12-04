@@ -26,5 +26,7 @@ char *DynamicStringToString(DynamicString * dynamicString);
 int DynamicStringToInt(DynamicString * dynamicString);
 double DynamicStringToDouble(DynamicString * dynamicString);
 double DynamicStringExpToDouble(DynamicString * dynamicString);
+void printDynamicString(DynamicString *);
+void DynamicStringReverse(DynamicString *, DynamicString *);
 
 #endif 
