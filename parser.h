@@ -5,6 +5,7 @@
 #include "tree.h"
 #include "htab.h"
 #include "token.h"
+#include "bottom_up_analysis.h"
 
 
 FILE* openFile(int argc, char** argv);

@@ -116,5 +116,6 @@ htab_data_t* createData(htab_key_t, variableDatatype_t);
 
 void copyDataFuncCall(htab_data_t*, htab_data_t*);
 
+void insertBuiltIn(htab_t*);
 
 #endif // __HTAB_H__

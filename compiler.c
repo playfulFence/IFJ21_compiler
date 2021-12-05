@@ -50,10 +50,10 @@ int main(int argc, char** argv)
     // open file to read program
     FILE* prog = openFile(argc, argv);
     //testScanner(prog);
-    
      // call parser to make abastract syntax tree
     ast_node *ast = parseAST(symtable, prog);
-
+    printAST(ast);
+    printf("GDFSDFSFDSfg\n");
     
     
     // ast_node *ast = make_new_node();

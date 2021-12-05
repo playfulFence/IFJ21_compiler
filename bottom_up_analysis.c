@@ -638,6 +638,8 @@ ast_node *bottomUpAnalysis(htab_list_t* hashTableList, FILE *f, DynamicString *d
                 if(topNoneTerminal == NONE_TERMINAL_DOLLAR && nextNoneTerminal == NONE_TERMINAL_DOLLAR)
                 {
                   ruleSequenceIsNotReady = 0;  
+                  ungetToken(expressionToken, tokenStack);
+                  continue;
                 }
                 else
                 {
@@ -683,15 +685,16 @@ ast_node *bottomUpAnalysis(htab_list_t* hashTableList, FILE *f, DynamicString *d
     simplifyTheTree(expressionTree);
     expressionTree->nodeType = NODE_ID;
 
-    if(expressionTree->nodeData.nilFlag)
-    {
-        expressionTree->nodeType = NODE_NIL_ARG;
-    }
-    else if(expressionTree->nodeData.zeroFlag)
-    {
-        expressionTree->nodeType = NODE_ZERO_ARG;
-    }
-    else if(expressionTree->nodeData.doubleData && (!expressionTree->nodeData.intData && !expressionTree->nodeData.stringData))
+    // if(expressionTree->nodeData.nilFlag)
+    // {
+    //     expressionTree->nodeType = NODE_NIL_ARG;
+    // }
+    // else if(expressionTree->nodeData.zeroFlag)
+    // {
+    //     expressionTree->nodeType = NODE_ZERO_ARG;
+    // }
+    //else
+    if(expressionTree->nodeData.doubleData && (!expressionTree->nodeData.intData && !expressionTree->nodeData.stringData))
     {
         expressionTree->nodeType = NODE_NUM_ARG;
     }
@@ -705,6 +708,6 @@ ast_node *bottomUpAnalysis(htab_list_t* hashTableList, FILE *f, DynamicString *d
     }
     
     printAST(expressionTree);
-    return returnExpressionNode;
+    return expressionTree;
 }
 

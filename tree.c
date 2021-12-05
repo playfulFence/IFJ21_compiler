@@ -1,6 +1,6 @@
 #include "tree.h"
 
-char *nodes[] = {"[*]", "[/]", "[//]", "[+]", "[-]", "[..]", "[<]", "[<=]", "[>]", "[>=]", "==", "~=","ID","#"};
+char *nodes[] = {"[*]", "[/]", "[//]", "[+]", "[-]", "[..]", "[<]", "[<=]", "[>]", "[>=]", "==", "~=","ID","#","FUNC_DEF","FUNC_DEF_PARAM_LIST", "FUNC_DEF_RETURN_DATATYPES_LIST", "FUNC_VOID_CALL", "FUNC_CALL", "FUNC_CALL_PARAM_LIST", "FUNC_DECL", "FUNC_DECL_DATATYPES_LIST", "FUNC_DECL_RETURN_DATATYPES_LIST", "STATEMENTS_LIST", "STATEMENT", "IF", "IF_CONDITION", "IF_THEN", "IF_ELSE", "THEN", "ELSE", "WHILE", "WHILE_CONDITION", "WHILE_DO", "RETURN", "VAR_DEF", "SINGLE_ASSIGN", "IDS", "VALUES", "INT_ARG", "NUM_ARG", "STR_ARG", "NIL_ARG", "ZERO_ARG", "ID_ARG", "MULTIPLE_ASSIGN", "PROG"};
 
 ast_node *make_new_node()
 {

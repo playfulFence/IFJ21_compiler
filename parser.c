@@ -50,12 +50,6 @@ int detectExpressionOrFunctionCall(tokenType_t tokenType, FILE *f, DynamicString
     }
 }
 
-ast_node *processExpression()
-{
-    ast_node *expressionNode = make_new_node();
-    return expressionNode;
-}
-
 // <statement> --> return <list_of_expressions>
 void processReturnStatement(ast_node *returnNode, ast_node* funcDefNode, htab_list_t* hashTableList, FILE *f, DynamicString *dynamicString, StackTokens *tokenStack)
 {
@@ -71,7 +65,7 @@ void processReturnStatement(ast_node *returnNode, ast_node* funcDefNode, htab_li
                 errorExit(SEMANTIC_PARAM_COUNT_ERR, token->line);                   // must return int, num, string
             }
 
-            ast_node *expressionNode = processExpression(); // TODO
+            ast_node *expressionNode = bottomUpAnalysis(hashTableList, f, dynamicString, tokenStack); // TODO
 
 
             if(expressionNode->nodeType == NODE_STR_ARG && funcDefNode->hashTableItem->funcReturns[returnCounter]->datatype != DATATYPE_STRING)
@@ -127,7 +121,7 @@ void processReturnStatement(ast_node *returnNode, ast_node* funcDefNode, htab_li
 // <statement> --> while expression do <list_of_statements> end
 void processWhileStatement(ast_node *whileNode, htab_list_t* hashTableList, FILE *f, DynamicString *dynamicString, StackTokens *tokenStack)
 {
-    ast_node *whileConditionNode = processExpression();
+    ast_node *whileConditionNode = bottomUpAnalysis(hashTableList, f, dynamicString, tokenStack);
     whileConditionNode->nodeType = NODE_WHILE_CONDITION;
     make_new_child(whileNode, whileConditionNode);
     token_t *token = getToken(f, dynamicString, tokenStack);
@@ -159,7 +153,7 @@ void processWhileStatement(ast_node *whileNode, htab_list_t* hashTableList, FILE
 // <statement> --> if expression then <list_of_statements> else <list_of_statements>  end
 void processIfStatement(ast_node *ifNode, htab_list_t* hashTableList, FILE *f, DynamicString *dynamicString, StackTokens *tokenStack)
 {
-    ast_node *ifConditionNode = processExpression();
+    ast_node *ifConditionNode = bottomUpAnalysis(hashTableList, f, dynamicString, tokenStack);
     ifConditionNode->nodeType = NODE_IF_CONDITION;
     make_new_child(ifNode, ifConditionNode);
     token_t *token = getToken(f, dynamicString, tokenStack);
@@ -389,7 +383,7 @@ void processSingleAssignment(ast_node *singleAssignNode, htab_list_t* hashTableL
         ungetToken(token, tokenStack);
         do
         {
-            expressionNode = processExpression(); // TODO
+            expressionNode = bottomUpAnalysis(hashTableList, f, dynamicString, tokenStack); // TODO
             make_new_child(expressionsNode, expressionNode);
             token = getToken(f, dynamicString, tokenStack);
             if(token->type == TOKEN_COMMA)
@@ -492,7 +486,7 @@ void processMultipleAssignment(ast_node *multAssignNode, htab_list_t* hashTableL
         // TODO think about func in expressions list
         do
         {
-            expressionNode = processExpression(); // TODO
+            expressionNode = bottomUpAnalysis(hashTableList, f, dynamicString, tokenStack); // TODO
             make_new_child(expressionsNode, expressionNode);
             token = getToken(f, dynamicString, tokenStack);
             if(token->type == TOKEN_COMMA)
@@ -569,8 +563,10 @@ void processVariableDefStatement(ast_node *varDefNode, htab_list_t* hashTableLis
     }
     // get next token, should be datatype
     token = getToken(f, dynamicString, tokenStack);
-    if((token->type != TOKEN_INT_KW) || (token->type != TOKEN_NUM_KW) || (token->type != TOKEN_STR_KW))
+    // TODO changed if condition
+    if(!((token->type == TOKEN_INT_KW) || (token->type == TOKEN_NUM_KW) || (token->type == TOKEN_STR_KW)))
     {
+        printf("ttoken type: %d\n", token->type);
         fprintf(stderr, "NOTE: processVariableDefStatement - no datatype token\n");
         errorExit(BAD_SYNTAX_ERR, token->line);
     }
@@ -594,6 +590,7 @@ void processVariableDefStatement(ast_node *varDefNode, htab_list_t* hashTableLis
     token = getToken(f, dynamicString, tokenStack);
     if(token->type != TOKEN_ASSIGNMENT)
     {
+        printf("593\n");
         ungetToken(token, tokenStack);
         variableNode->hashTableItem->declareFlag = true;    // means that value is NIL!!!!
         variableNode->hashTableItem->defineFlag = false;        // p.s. we're so smart to make new flag
@@ -605,7 +602,7 @@ void processVariableDefStatement(ast_node *varDefNode, htab_list_t* hashTableLis
     {
     case 1: // expression
         ungetToken(token, tokenStack);
-        processExpression(); // TODO
+        bottomUpAnalysis(hashTableList, f, dynamicString, tokenStack); // TODO
         break;
     case 2: // function call 
         ungetToken(token, tokenStack);
@@ -626,12 +623,14 @@ void processStatement(ast_node *funcDefNode, htab_list_t* hashTableList, FILE *f
     token_t *token = getToken(f, dynamicString, tokenStack);
     token_t *nextToken;
 
+    printf("token type: %d\n", token->type);
     // detect type of statement 
     switch (token->type)
     {
     case TOKEN_LOCAL:
         // set type of the statement node to variable definition statement
         statementNode->nodeType = NODE_VAR_DEF;
+        printf("632\n");
         // process variable definition
         processVariableDefStatement(statementNode, hashTableList, f, dynamicString, tokenStack); // <statement> --> local id : datatype = <expression_or_func_call>
         break;
@@ -831,12 +830,15 @@ void processVoidFunctionCall(ast_node *ast, htab_list_t* hashTableList, FILE *f,
     token_t* token = getToken(f, dynamicString, tokenStack);
     if(token->type != TOKEN_ID)
     {
+        printf("828\n");
         exit(228);
     }
 
-    if(!listSearch(hashTableList,token->data.tokenStringVal, FROM_SECOND) ||
-        listSearch(hashTableList, token->data.tokenStringVal, FROM_SECOND)->type != TYPE_FUNC)
+    if(!listSearch(hashTableList,token->data.tokenStringVal, FROM_FIRST) ||
+        listSearch(hashTableList, token->data.tokenStringVal, FROM_FIRST)->type != TYPE_FUNC)
     {
+
+        printf("834, %d\n", listSearch(hashTableList, token->data.tokenStringVal, FROM_FIRST)->type);
         exit(228);
     }
 
@@ -879,6 +881,7 @@ void processFunctionDeclaration(ast_node *ast, htab_list_t* hashTableList, FILE 
     if(htab_find(hashTableList->first->symtable, token->data.tokenStringVal))
     {
         //ERROR
+        printf("876\n");
         exit(228);
     }
 
@@ -952,6 +955,7 @@ void processFunctionDefinition(ast_node *ast, htab_list_t *hashTableList, FILE *
        htab_find(hashTableList->first->symtable,token->data.tokenStringVal)->defineFlag)
     {
         //TODO error code
+        printf("949");
         exit(228);
     }
 
@@ -959,6 +963,8 @@ void processFunctionDefinition(ast_node *ast, htab_list_t *hashTableList, FILE *
 
     funcDefNode->hashTableItem = htab_lookup_add(levelZeroTable, token->data.tokenStringVal);
 
+    // TODO set type to FUNC TYPE
+    funcDefNode->hashTableItem->type = TYPE_FUNC;
 
     // get next token, should be (
     token = getToken(f, dynamicString, tokenStack);
@@ -996,6 +1002,7 @@ void processFunctionDefinition(ast_node *ast, htab_list_t *hashTableList, FILE *
     insertFirst(hashTableList, newItem);
     while(token->type != TOKEN_END)
     {
+        printf("1005: Process statement\n");
         ungetToken(token, tokenStack);
         processStatement(funcDefNode, hashTableList, f, dynamicString, tokenStack);
         token = getToken(f, dynamicString, tokenStack);
@@ -1058,7 +1065,7 @@ void processProgramTemplate(ast_node *ast, htab_list_t *hashTableList, FILE *f, 
 // main function that starts building ast
 ast_node *parseAST(htab_t *symTable, FILE *f)
 {
-    //insertBuiltIn
+    insertBuiltIn(symTable);
     StackTokens tokenStack;
     initStackTokens(&tokenStack);
     DynamicString dynamicString;
