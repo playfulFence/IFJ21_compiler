@@ -7,13 +7,63 @@
 
 void testScope(htab_list_t* hashTableList)
 {
-    htab_list_item_t* buffer = hashTableList->first;
+    htab_list_t* testList = initList();
+    htab_t* testHtab = htab_init(43969);
+    htab_list_item_t* buffer = createItem(testHtab);
+    insertFirst(testList, buffer);
 
-    while(buffer)
+    htab_lookup_add(testList->first->symtable, "keyword");
+    htab_lookup_add(testList->first->symtable, "yaYeblan");
+
+    listSearch(testList, "keyword", FROM_FIRST)->countOfArgs = 6;
+
+    htab_t* testShit = htab_init(43969);
+    htab_list_item_t* wtf = createItem(testShit);
+    insertFirst(testList, wtf);
+
+    htab_lookup_add(testList->first->symtable, "Maxon");
+    htab_lookup_add(testList->first->symtable, "keyword");
+    htab_lookup_add(testList->first->symtable, "Kiriyha");
+
+    
+    listSearch(testList, "Maxon", FROM_FIRST)->countOfArgs = 29;
+
+    if(listSearch(testList, "Maxon", FROM_FIRST))
     {
-        htab_for_each(buffer->symtable, printWord);
-        buffer = buffer->next;
+        if(listSearch(testList, "Maxon", FROM_FIRST)->countOfArgs == 29)
+        {
+            printf("Всё ок, заебал\n");
+        }
+        else printf("отъебись\n");
     }
+    else printf("пососи\n");
+
+
+    listSearch(testList, "yaYeblan", FROM_FIRST)->countOfArgs = 228;
+    
+
+    htab_lookup_add(testList->first->next->symtable, "Snova tuta");
+
+
+    htab_t* penis = htab_init(43969);
+    htab_list_item_t* penisItem = createItem(penis);
+    insertFirst(testList, penisItem);
+
+    htab_lookup_add(testList->first->symtable, "Я не дурак");
+    htab_lookup_add(testList->first->next->next->symtable, "Ну может хватит?");
+    htab_find(testList->first->next->next->symtable, "Ну может хватит?")->countOfArgs = 40;
+    
+
+
+    htab_list_item_t* tmpLooker = testList->first;
+
+    while(tmpLooker)
+    {
+        htab_for_each(tmpLooker->symtable, printWord);
+        printf("\n\n");
+        tmpLooker = tmpLooker->next;
+    }
+
 
 }
 
@@ -1147,7 +1197,7 @@ ast_node *parseAST(htab_t *symTable, FILE *f)
     insertFirst(hashTableList, newItem);
     ast_node *ast = make_new_node();
     ast->nodeType = NODE_PROG;
-    processProgramTemplate(ast, hashTableList, f, &dynamicString, &tokenStack);
+   // processProgramTemplate(ast, hashTableList, f, &dynamicString, &tokenStack);
     testScope(hashTableList);
 
     return ast;
