@@ -598,11 +598,15 @@ void processVariableDefStatement(ast_node *varDefNode, htab_list_t* hashTableLis
     }
     // get next token, should be start of expression or start of function call 
     token = getToken(f, dynamicString, tokenStack);
+    ast_node *valueNode = make_new_node();
+    // valueNode->nodeType = NODE_VALUES; // TODO
+    //make_new_child(varDefNode, valueNode);
     switch (detectExpressionOrFunctionCall(token->type, f, dynamicString, tokenStack))
     {
     case 1: // expression
         ungetToken(token, tokenStack);
-        bottomUpAnalysis(hashTableList, f, dynamicString, tokenStack); // TODO
+        valueNode = bottomUpAnalysis(hashTableList, f, dynamicString, tokenStack); // TODO
+        variableNode->nodeData = valueNode->nodeData;
         break;
     case 2: // function call 
         ungetToken(token, tokenStack);
@@ -706,9 +710,13 @@ void processStatement(ast_node *funcDefNode, htab_list_t* hashTableList, FILE *f
 void processDatatypesList(ast_node* funcDeclNode, htab_list_t* hashTableList, FILE *f, DynamicString *dynamicString, StackTokens *tokenStack)
 {
     token_t* token = getToken(f, dynamicString, tokenStack);
-    
+    if(!(token->type == TOKEN_INT_KW || token->type == TOKEN_NUM_KW || token->type == TOKEN_STR_KW))
+            {
+                errorExit(BAD_SYNTAX_ERR, token->line);
+            }
     while(token->type == TOKEN_INT_KW || token->type == TOKEN_NUM_KW || token->type == TOKEN_STR_KW)
     {
+        printf("712\n");
         htab_data_t* newArgDT = malloc(sizeof(htab_data_t));
 
         switch (token->type)
@@ -732,9 +740,16 @@ void processDatatypesList(ast_node* funcDeclNode, htab_list_t* hashTableList, FI
         if(token->type == TOKEN_COMMA)
         {
             token = getToken(f, dynamicString, tokenStack);
+            if(!(token->type == TOKEN_INT_KW || token->type == TOKEN_NUM_KW || token->type == TOKEN_STR_KW))
+            {
+                errorExit(BAD_SYNTAX_ERR, token->line);
+            }
             continue;
         }
-        else return;
+        else if (token->type != TOKEN_COMMA && token->type != TOKEN_R_BR)
+        {
+            errorExit(BAD_SYNTAX_ERR, token->line);
+        }
     }
 }
 
@@ -769,12 +784,20 @@ void processReturnDatatypesList(ast_node* funcDefNode, htab_list_t* hashTableLis
             token = getToken(f, dynamicString, tokenStack);
             continue;
         }
-        else return;
+        else if (token->type == TOKEN_INT_KW || token->type == TOKEN_NUM_KW || token->type == TOKEN_STR_KW)
+        {
+            errorExit(BAD_SYNTAX_ERR, token->line);
+        }
+        else 
+        {
+            ungetToken(token, tokenStack);
+            return;
+        }
     }
 
  /*-----------------------------------If function reaches this point - ERROR!-----------------------------------------*/
     fprintf(stderr, "%s ERROR : No datatype in non-process function\n", __func__); 
-    exit(228);
+    errorExit(BAD_SYNTAX_ERR, token->line);
     // TODO counter of lines in program!!!
 }
 
@@ -815,11 +838,33 @@ void processParametersList(ast_node* funcDefNode, htab_list_t* hashTableList, FI
                     if(token->type == TOKEN_COMMA)
                     {
                         token = getToken(f, dynamicString, tokenStack);
+                        if(token->type != TOKEN_ID)
+                        {
+                            errorExit(BAD_SYNTAX_ERR, token->line);
+                        }
                         continue;
                     }
+                    else if (token->type != TOKEN_COMMA && token->type != TOKEN_R_BR)
+                    {
+                        errorExit(BAD_SYNTAX_ERR, token->line);
+                    }
                 }
-                // TODO ERRORS
+                else
+                {
+                    fprintf(stderr, "NOTE: expected DATATYPE token\n");
+                    errorExit(BAD_SYNTAX_ERR, token->line);    
+                }
             }
+            else
+            {
+                fprintf(stderr, "NOTE: expected COLON token\n");
+                errorExit(BAD_SYNTAX_ERR, token->line);    
+            }
+        }
+        else
+        {
+            fprintf(stderr, "NOTE: expected ID token\n");
+            errorExit(BAD_SYNTAX_ERR, token->line);
         }
     }
 }
@@ -831,7 +876,7 @@ void processVoidFunctionCall(ast_node *ast, htab_list_t* hashTableList, FILE *f,
     if(token->type != TOKEN_ID)
     {
         printf("828\n");
-        exit(228);
+        errorExit(BAD_SYNTAX_ERR, token->line);
     }
 
     if(!listSearch(hashTableList,token->data.tokenStringVal, FROM_FIRST) ||
@@ -839,7 +884,7 @@ void processVoidFunctionCall(ast_node *ast, htab_list_t* hashTableList, FILE *f,
     {
 
         printf("834, %d\n", listSearch(hashTableList, token->data.tokenStringVal, FROM_FIRST)->type);
-        exit(228);
+        errorExit(SEMANTIC_UNDEF_REDEF_ERR, token->line);
     }
 
     // make node for function declaration
@@ -852,12 +897,14 @@ void processVoidFunctionCall(ast_node *ast, htab_list_t* hashTableList, FILE *f,
     {
         // ERROR
         printf("ERROR void function call - no ( \n");
+        errorExit(BAD_SYNTAX_ERR, token->line);
     }
     token = getToken(f, dynamicString, tokenStack);
     if(token->type != TOKEN_R_BR)
     {
         // ERROR
         printf("ERROR void function call - no ) \n");
+        errorExit(BAD_SYNTAX_ERR, token->line);
     }
     make_new_child(ast, funcVoidFuncCall);
 }
@@ -869,23 +916,26 @@ void processFunctionDeclaration(ast_node *ast, htab_list_t* hashTableList, FILE 
     // make node for function declaration
     ast_node *funcDeclNode = make_new_node();
     funcDeclNode->nodeType = NODE_FUNC_DECL;
+    // set funcDef node as a child of program root
+    make_new_child(ast, funcDeclNode);
     // get next token, should be ID
     token_t *token = getToken(f, dynamicString, tokenStack);
     if(token->type != TOKEN_ID)
     {
         // ERROR
         printf("ERROR function declaration - no function ID\n");
+        errorExit(BAD_SYNTAX_ERR, token->line);
     }
     funcDeclNode->nodeData.stringData = token->data.tokenStringVal;
-    
+    printf("882\n");
     if(htab_find(hashTableList->first->symtable, token->data.tokenStringVal))
     {
         //ERROR
         printf("876\n");
-        exit(228);
+        errorExit(SEMANTIC_UNDEF_REDEF_ERR, token->line);
     }
-
-    //funcDefNode->hashTableItem = htab_lookup_add(levelZeroTable, token->data.tokenStringVal);
+    printf("889\n");
+    funcDeclNode->hashTableItem = htab_lookup_add(hashTableList->first->symtable, token->data.tokenStringVal);
 
     // get next token, should be : 
     token = getToken(f, dynamicString, tokenStack);
@@ -893,7 +943,7 @@ void processFunctionDeclaration(ast_node *ast, htab_list_t* hashTableList, FILE 
     {
         // ERROR
         printf("ERROR function declaration - no : \n");
-        exit(228);
+        errorExit(BAD_SYNTAX_ERR, token->line);
     }
     // get next token, should be function key word
     token = getToken(f, dynamicString, tokenStack);
@@ -901,6 +951,7 @@ void processFunctionDeclaration(ast_node *ast, htab_list_t* hashTableList, FILE 
     {
         // ERROR
         printf("ERROR function declaration - no function key word \n");
+        errorExit(BAD_SYNTAX_ERR, token->line);
     }
     // get next token, should be (
     token = getToken(f, dynamicString, tokenStack);
@@ -908,6 +959,7 @@ void processFunctionDeclaration(ast_node *ast, htab_list_t* hashTableList, FILE 
     {
         // ERROR
         printf("ERROR function declaration - no ( \n");
+        errorExit(BAD_SYNTAX_ERR, token->line);
     }
     // get next token, if it's not ), process list of datatypes
     token = getToken(f, dynamicString, tokenStack);
@@ -916,22 +968,26 @@ void processFunctionDeclaration(ast_node *ast, htab_list_t* hashTableList, FILE 
         ungetToken(token, tokenStack);
         processDatatypesList(funcDeclNode, hashTableList, f, dynamicString, tokenStack);  // TODO think about function ungetToken(), then there will be one function for datatypes list and return datatypes list
     }
-    // get next token, should be :
+    printf("921\n");
+    // get next token, should be :, else void function
     token = getToken(f, dynamicString, tokenStack);
     if(token->type != TOKEN_COLON)
     {
-        // ERROR
-        printf("ERROR function declaration - no : \n");
+        // // ERROR
+        // printf("ERROR function declaration - no : \n");
+        ungetToken(token, tokenStack);
+        printf("928\n");
+        funcDeclNode->hashTableItem->declareFlag = true;
+        funcDeclNode->hashTableItem->defineFlag = false;
+        printf("931\n");
+        return;
     }
+    printf("932\n");
     // process list of return datatypes 
     processReturnDatatypesList(funcDeclNode, hashTableList, f, dynamicString, tokenStack);
-
+    printf("935\n");
     funcDeclNode->hashTableItem->declareFlag = true;
     funcDeclNode->hashTableItem->defineFlag = false;
-
-    // set funcDef node as a child of program root
-    make_new_child(ast, funcDeclNode);
-
 }
 
 // <functions> --> function id ( <list_of_parameters> ) : <list_of_datatypes> <list_of_statements> end
@@ -956,7 +1012,7 @@ void processFunctionDefinition(ast_node *ast, htab_list_t *hashTableList, FILE *
     {
         //TODO error code
         printf("949");
-        exit(228);
+        errorExit(SEMANTIC_UNDEF_REDEF_ERR, token->line);
     }
 
     // TODO check compatibility of datatypes of args and returns
@@ -1039,12 +1095,14 @@ void processProgramTemplate(ast_node *ast, htab_list_t *hashTableList, FILE *f, 
     token = getToken(f, dynamicString, tokenStack);
     while(token->type != TOKEN_EOF)
     {
+        printf("1065: token type %d(%s)\n", token->type, token->data.tokenStringVal);
         if(token->type == TOKEN_FUNC) // <functions> --> function id ( <list_of_parameters> ) : <list_of_datatypes> <list_of_statements> end
         {
             processFunctionDefinition(ast, hashTableList, f, dynamicString, tokenStack);
         }
         else if(token->type == TOKEN_GLOBAL) // <functions> --> global id : function ( <list_of_datatypes> ) : <list_of_datatypes>
         {
+            printf("1049: go to function declaration\n");
             processFunctionDeclaration(ast, hashTableList, f, dynamicString, tokenStack);
         }
         else if(token->type == TOKEN_ID) // <functions> --> id ( )
@@ -1056,6 +1114,7 @@ void processProgramTemplate(ast_node *ast, htab_list_t *hashTableList, FILE *f, 
         {
             //ERROR
             printf("ERROR not a functions block\n");
+            errorExit(BAD_SYNTAX_ERR, token->line);
         }
         token = getToken(f, dynamicString, tokenStack);
     }

@@ -33,7 +33,7 @@ void print_nodes(ast_node *ast, int indent)
     {   
         printf(" ");
     }
-    if(ast->nodeType == NODE_ID)
+    if(ast->nodeType == NODE_ID || ast->nodeType == NODE_NIL_ARG)
     {
         if(ast->nodeData.intData != 0)
         {
@@ -45,7 +45,8 @@ void print_nodes(ast_node *ast, int indent)
         }
         else if(ast->nodeData.stringData != NULL)
         {
-            printf("%s(%s)\n", nodes[ast->nodeType], ast->nodeData.stringData);
+            char *ch = ast->nodeData.stringData;
+            printf("%s(%s)\n", nodes[ast->nodeType], ch);
         }
     }
     else

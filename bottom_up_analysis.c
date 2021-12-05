@@ -685,15 +685,15 @@ ast_node *bottomUpAnalysis(htab_list_t* hashTableList, FILE *f, DynamicString *d
     simplifyTheTree(expressionTree);
     expressionTree->nodeType = NODE_ID;
 
-    // if(expressionTree->nodeData.nilFlag)
-    // {
-    //     expressionTree->nodeType = NODE_NIL_ARG;
-    // }
-    // else if(expressionTree->nodeData.zeroFlag)
-    // {
-    //     expressionTree->nodeType = NODE_ZERO_ARG;
-    // }
-    //else
+    if(expressionTree->nodeData.nilFlag)
+    {
+        expressionTree->nodeType = NODE_NIL_ARG;
+    }
+    else if(expressionTree->nodeData.zeroFlag)
+    {
+        expressionTree->nodeType = NODE_ZERO_ARG;
+    }
+    else
     if(expressionTree->nodeData.doubleData && (!expressionTree->nodeData.intData && !expressionTree->nodeData.stringData))
     {
         expressionTree->nodeType = NODE_NUM_ARG;
