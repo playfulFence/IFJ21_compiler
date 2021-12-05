@@ -108,13 +108,15 @@ void insertFirst(htab_list_t*, htab_list_item_t*);
 void removeFirst(htab_list_t*);
 void freeList(htab_list_t*);
 
+void printWord(htab_data_t*);
+
 htab_data_t* listSearch(htab_list_t*, htab_key_t, bool);
 
 void makeNewArg(htab_data_t*, htab_data_t*);
 void makeNewRet(htab_data_t*, htab_data_t*);
 htab_data_t* createData(htab_key_t, variableDatatype_t);
 
-void copyDataFuncCall(htab_data_t*, htab_data_t*);
+htab_data_t* copyDataFuncCall(htab_data_t*, htab_data_t*);
 
 void insertBuiltIn(htab_t*);
 

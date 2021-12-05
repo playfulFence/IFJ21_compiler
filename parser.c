@@ -5,6 +5,19 @@
 #include "scanner.h"
 #include "error.h"
 
+void testScope(htab_list_t* hashTableList)
+{
+    htab_list_item_t* buffer = hashTableList->first;
+
+    while(buffer)
+    {
+        htab_for_each(buffer->symtable, printWord);
+        buffer = buffer->next;
+    }
+
+}
+
+
 void processStatement(ast_node *funcDefNode, htab_list_t* hashTableList, FILE *f, DynamicString *dynamicString, StackTokens *tokenStack);
 
 FILE* openFile(int argc, char** argv)
@@ -1124,7 +1137,7 @@ void processProgramTemplate(ast_node *ast, htab_list_t *hashTableList, FILE *f, 
 // main function that starts building ast
 ast_node *parseAST(htab_t *symTable, FILE *f)
 {
-    insertBuiltIn(symTable);
+    //insertBuiltIn(symTable);
     StackTokens tokenStack;
     initStackTokens(&tokenStack);
     DynamicString dynamicString;
@@ -1135,6 +1148,7 @@ ast_node *parseAST(htab_t *symTable, FILE *f)
     ast_node *ast = make_new_node();
     ast->nodeType = NODE_PROG;
     processProgramTemplate(ast, hashTableList, f, &dynamicString, &tokenStack);
+    testScope(hashTableList);
 
     return ast;
 }

@@ -66,8 +66,12 @@ void htab_clear(htab_t *t)
         {
             htab_item_t *save_next = buffer->next; /* Saves pointer to the next item */
             free((char*)buffer->itemData->key);
+            for(int x = 0; x < buffer->itemData->countOfArgs; x++) free(buffer->itemData->funcArgs[x]);             // TODO check, mb delete!
+            for(int x = 0; x < buffer->itemData->countOfReturns; x++) free(buffer->itemData->funcReturns[x]);
+            free(buffer->itemData->varStrVal);
             free(buffer->itemData);
             free(buffer);
+            
 
             buffer = save_next;                    /* buffer is now pointer to (saved above) next item */
         }
@@ -159,6 +163,10 @@ bool htab_erase(htab_t * t, htab_key_t key)
     return false;
 }
 
+void printWord(htab_data_t *data)
+{
+    printf("%s\n", data->key);
+}
 
 void htab_for_each(const htab_t * t, void (*f)(htab_data_t *data))
 {
@@ -249,9 +257,7 @@ htab_data_t * htab_lookup_add(htab_t * t, htab_key_t key)
         errorExit(COMPILER_INTERN_ERR, 99);
     }
 
-    /* If "key" already exists, returns pointer to pair
-     *  where the"key" was found */
-    //if(htab_find(t, key) != NULL) return htab_find(t, key);
+    
 
     /* -------------- If "key" was found, here function run will stop ----------------- */
 
@@ -381,11 +387,16 @@ void removeFirst(htab_list_t* list)
         exit(228); // TODO
     }
 
-    if(!list->first->next) free(list->first);
+    if(!list->first->next) 
+    {
+        htab_free(list->first->symtable);
+        free(list->first);
+    }
     else
     {
         htab_list_item_t* thanosSnap = list->first;
         list->first = list->first->next;
+        htab_free(thanosSnap->symtable);
         free(thanosSnap);
     }
 }
@@ -415,7 +426,7 @@ htab_data_t* listSearch(htab_list_t* list, htab_key_t key, bool choose)
     while(inspectorGadget)
     {
         if(htab_find(inspectorGadget->symtable, key)) return htab_find(inspectorGadget->symtable, key);
-        inspectorGadget = inspectorGadget->next;
+        else inspectorGadget = inspectorGadget->next;
     }
 
     return NULL;
@@ -451,8 +462,9 @@ htab_data_t* createData(htab_key_t key, variableDatatype_t datatype)
 }
 
 
-void copyDataFuncCall(htab_data_t* from, htab_data_t* to)
+htab_data_t* copyDataFuncCall(htab_data_t* from, htab_data_t* to)
 {
+    to = malloc(sizeof(htab_data_t));
     to->countOfArgs = from->countOfArgs;
     to->countOfReturns = from->countOfReturns;
 
@@ -461,7 +473,7 @@ void copyDataFuncCall(htab_data_t* from, htab_data_t* to)
     to->funcArgs = malloc(sizeof(htab_data_t) * to->countOfArgs);
     to->funcReturns = malloc(sizeof(htab_data_t) * to->countOfReturns);
 
-    if(to->funcArgs || to->funcReturns)
+    if(!to->funcArgs || !to->funcReturns)
     {
         fprintf(stderr, "ERROR in %s: Memory allocation failed\n", __func__);
         errorExit(COMPILER_INTERN_ERR, 99);
@@ -482,6 +494,8 @@ void copyDataFuncCall(htab_data_t* from, htab_data_t* to)
         tmp->datatype = from->datatype;
         to->funcReturns[i] = tmp;
     }
+    
+    return to;
 }
 
 void insertBuiltIn(htab_t* htab)
