@@ -668,19 +668,22 @@ void processVariableDefStatement(ast_node *varDefNode, htab_list_t* hashTableLis
         ungetToken(token, tokenStack);
         variableNode->hashTableItem->declareFlag = true;    // means that value is NIL!!!!
         variableNode->hashTableItem->defineFlag = false;        // p.s. we're so smart to make new flag
+        variableNode->nodeData.nilFlag = true;
+        variableNode->nodeData.zeroFlag = false;
+        variableNode->hashTableItem->datatype = DATATYPE_NIL;
+        variableNode->nodeType = NODE_NIL_ARG;
         return;
     }
     // get next token, should be start of expression or start of function call 
     token = getToken(f, dynamicString, tokenStack);
     ast_node *valueNode = make_new_node();
-    // valueNode->nodeType = NODE_VALUES; // TODO
-    //make_new_child(varDefNode, valueNode);
     switch (detectExpressionOrFunctionCall(token->type, f, dynamicString, tokenStack))
     {
     case 1: // expression
         ungetToken(token, tokenStack);
-        valueNode = bottomUpAnalysis(hashTableList, f, dynamicString, tokenStack); // TODO
-        variableNode->nodeData = valueNode->nodeData;
+        valueNode = bottomUpAnalysis(hashTableList, f, dynamicString, tokenStack);
+        variableNode->nodeData = valueNode->nodeData; // ПРОЕБАЛСЯ НУМБЕР
+        printf("%d - type , хуй %d - number\n", valueNode->nodeType, valueNode->nodeData.intData);
         break;
     case 2: // function call 
         ungetToken(token, tokenStack);

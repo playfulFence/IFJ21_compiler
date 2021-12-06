@@ -50,11 +50,11 @@ int main(int argc, char** argv)
     // make hash table
     htab_t * symtable = htab_init(43969);
     // open file to read program
-     FILE* prog = openFile(argc, argv);
-    testScanner(prog);
+    FILE* prog = openFile(argc, argv);
+    //testScanner(prog);
      // call parser to make abastract syntax tree
-    // ast_node *ast = parseAST(symtable, prog);
-    // printAST(ast);
+    ast_node *ast = parseAST(symtable, prog);
+    printAST(ast);
     //printf("GDFSDFSFDSfg\n");
     
     

@@ -211,17 +211,18 @@ void buildTreeFromRuleSequence(ast_node *node, DynamicString *ruleSequenceString
         {
         case TOKEN_NUM:
             node->nodeData.doubleData = token->data.tokenNumVal;
-            //node->nodeType = NODE_NUM_ARG;
+            node->nodeType = NODE_NUM_ARG;
             break;
         case TOKEN_INT:
-            node->nodeData.intData = token->data.tokenIntVal;   
-            //node->nodeType = NODE_INT_ARG;
+            node->nodeData.intData = token->data.tokenIntVal; 
+            node->nodeData.nilFlag = false;   // HERE!!!!!
+            node->nodeType = NODE_INT_ARG;
             break;
         case TOKEN_STR:
             //strcpy(node->nodeData.stringData, token->data.tokenStringVal);
             printf("aaaaaaaa: %s\n", token->data.tokenStringVal);
             node->nodeData.stringData = token->data.tokenStringVal;
-            //node->nodeType = NODE_STR_ARG;
+            node->nodeType = NODE_STR_ARG;
             printf("aaaaaaaa: %s\n", node->nodeData.stringData);
             break;
         default:
@@ -589,7 +590,7 @@ void processNode(ast_node *node)
 
 void simplifyTheTree(ast_node *node)
 {
-    if(node->nodeType == NODE_ID)
+    if(node->nodeType == NODE_ID || node->nodeType == NODE_INT_ARG || node->nodeType == NODE_NUM_ARG || node->nodeType == NODE_STR_ARG)
     {
         return;
     }
@@ -630,6 +631,7 @@ ast_node *bottomUpAnalysis(htab_list_t* hashTableList, FILE *f, DynamicString *d
     pushNoneTerminalElement(&stackOfNoneTerminals, NONE_TERMINAL_DOLLAR);
     topNoneTerminal = stackOfNoneTerminals.top->element;
     expressionToken = getToken(f, dynamicString, tokenStack);
+
     nextNoneTerminal = transformTokenToNoneTerminal(expressionToken->type);
 
     // main cycle that processes expression 
@@ -672,7 +674,8 @@ ast_node *bottomUpAnalysis(htab_list_t* hashTableList, FILE *f, DynamicString *d
         expressionToken = getToken(f, dynamicString, tokenStack);
         nextNoneTerminal = transformTokenToNoneTerminal(expressionToken->type);
     }
-    
+    // token.type = TOKEN_END
+
     // reversed rule sequence string 
     DynamicString reversedRuleSequenceString;
     DynamicStringInit(&reversedRuleSequenceString);
@@ -688,8 +691,9 @@ ast_node *bottomUpAnalysis(htab_list_t* hashTableList, FILE *f, DynamicString *d
     buildTreeFromRuleSequence(expressionTree, &reversedRuleSequenceString, &stackOfVariables);
     printAST(expressionTree);
     simplifyTheTree(expressionTree);
-    expressionTree->nodeType = NODE_ID;
 
+    
+    
     if(expressionTree->nodeData.nilFlag)
     {
         expressionTree->nodeType = NODE_NIL_ARG;

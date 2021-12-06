@@ -7,7 +7,7 @@ ast_node *make_new_node()
     ast_node *newNode = malloc(sizeof(ast_node));
     newNode->childrenNodes = malloc(sizeof(ast_node));
     newNode->childrenCounter = 0;
-    newNode->nodeData.nilFlag = false;
+    //newNode->nodeData.nilFlag = false;
     return newNode;
 }
 
