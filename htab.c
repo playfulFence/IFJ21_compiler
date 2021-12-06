@@ -272,6 +272,8 @@ htab_data_t * htab_lookup_add(htab_t * t, htab_key_t key)
     new->itemData->countOfReturns = 0;
     new->itemData->funcArgs = NULL;
     new->itemData->funcReturns = NULL;
+    new->itemData->declareFlag = false;
+    new->itemData->defineFlag = false;
 
     /* Points nowhere, because new element will be the last in "chain" */
     new->next = NULL;

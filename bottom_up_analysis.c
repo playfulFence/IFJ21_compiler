@@ -1,7 +1,6 @@
 #include "bottom_up_analysis.h"
 #include "string.h"
 #include "stdio.h"
-#include "error.h"
 
 NoneTerminal transformTokenToNoneTerminal(tokenType_t type)
 {
@@ -159,40 +158,54 @@ void reduceByTheRule(NoneTerminal *topNoneTerminal, NoneTerminalStack *stackOfNo
     }
 }
 
-void shiftElement(token_t *expressionToken, htab_list_t* hashTableList, NoneTerminal nextNoneTerminal, StackTokens *stackOfVaruables, NoneTerminalStack *stackOfNoneTerminals)
+void shiftElement(token_t *expressionToken, NoneTerminal nextNoneTerminal, StackTokens *stackOfVaruables, NoneTerminalStack *stackOfNoneTerminals, htab_list_t *hashTableList)
 {
     pushNoneTerminalElement(stackOfNoneTerminals, nextNoneTerminal);
     if(expressionToken->type == TOKEN_STR || expressionToken->type == TOKEN_INT || expressionToken->type == TOKEN_NUM || expressionToken->type == TOKEN_ID)
     {
         if(expressionToken->type == TOKEN_ID)
         {
-            if(!listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_FIRST) || !listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_FIRST)->defineFlag)
+            printf("Check if\n");
+            if(!listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_FIRST)) //check if there is this variable 
             {
-                errorExit(SEMANTIC_UNDEF_REDEF_ERR, expressionToken->line);
+                printf("Undefined variiable\n");
+                exit(11);
             }
-
-            htab_data_t* thisIDvar = listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_FIRST);
-
-
-            if(thisIDvar->datatype == DATATYPE_INT) 
+            else
             {
-                expressionToken->type = TOKEN_INT;
-                expressionToken->data.tokenIntVal = thisIDvar->varIntVal;
-            }
-            else if(thisIDvar->datatype == DATATYPE_NUM)
-            {
-                expressionToken->type = TOKEN_NUM;
-                expressionToken->data.tokenNumVal = thisIDvar->varNumVal;
-            }
-            else if(thisIDvar->datatype == DATATYPE_STRING)
-            {
-                expressionToken->type = TOKEN_STR;
-                expressionToken->data.tokenStringVal = thisIDvar->varStrVal;
-            }
-            else if(thisIDvar->datatype == DATATYPE_NIL)
-            {
-                expressionToken->type = TOKEN_NIL;
-                //expressionToken->data.nilFlag = true;
+                if(listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_FIRST)->type != TYPE_VARIABLE) // check if it's variable
+                {
+                    printf("NOT A VARIABLE\n");
+                    exit(11);
+                }
+                else
+                {
+                    if(listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_FIRST)->defineFlag == 0) // check if variable is defined
+                    {
+                        printf("VARIABLE IS UNDEFINED\n");
+                        exit(11);
+                    }
+                    else // OK, it's variable 
+                    {
+                        switch (listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_FIRST)->datatype)
+                        {
+                        case DATATYPE_INT:
+                            expressionToken->type = TOKEN_INT;
+                            expressionToken->data.tokenIntVal = listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_FIRST)->varIntVal;
+                            break;
+                        case DATATYPE_NUM:
+                            expressionToken->type = TOKEN_NUM;
+                            expressionToken->data.tokenNumVal = listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_FIRST)->varNumVal;
+                            break;
+                        case DATATYPE_STRING:
+                            expressionToken->type = TOKEN_STR;
+                            expressionToken->data.tokenStringVal = listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_FIRST)->varStrVal;
+                            break;
+                        default:
+                            break;
+                        }
+                    }
+                }
             }
         }
         pushTokenStackTokens(stackOfVaruables, expressionToken);
@@ -200,56 +213,33 @@ void shiftElement(token_t *expressionToken, htab_list_t* hashTableList, NoneTerm
     
 }
 
-
-
 void buildTreeFromRuleSequence(ast_node *node, DynamicString *ruleSequenceString, StackTokens *stackOfVariables)
 {
-    printDynamicString(ruleSequenceString);
     if(ruleSequenceString->firstSymbol->symbol == '0')
     {
-        node->nodeType = NODE_ID;
         token_t *token = popTokenStackTokens(stackOfVariables);
         switch (token->type)
         {
         case TOKEN_NUM:
-            node->hashTableItem = malloc(sizeof(htab_data_t));
-            node->hashTableItem->varNumVal = token->data.tokenNumVal;
-            node->hashTableItem->varStrVal = NULL;
-            node->hashTableItem->declareFlag = true; 
-            node->hashTableItem->defineFlag = true;
             node->nodeType = NODE_NUM_ARG;
+            node->nodeData.doubleData = token->data.tokenNumVal;
             break;
         case TOKEN_INT:
-            node->hashTableItem = malloc(sizeof(htab_data_t));
-            node->hashTableItem->varIntVal = token->data.tokenIntVal; 
-            node->hashTableItem->varNumVal = (double)token->data.tokenIntVal;
-            node->hashTableItem->varStrVal = NULL;
-            node->hashTableItem->declareFlag = true;
-            node->hashTableItem->defineFlag = true;
-            //node->hashTableItem->key = token->data.tokenStringVal;
             node->nodeType = NODE_INT_ARG;
+            node->nodeData.intData = token->data.tokenIntVal;   
             break;
         case TOKEN_STR:
-            //strcpy(node->nodeData.stringData, token->data.tokenStringVal);
-            printf("aaaaaaaa: %s\n", token->data.tokenStringVal);
-            node->hashTableItem = malloc(sizeof(htab_data_t)); // HERE MAYBE ALLOCATE MEM FOR STRING!!!
-            node->hashTableItem->varStrVal = malloc(sizeof(char) * strlen(token->data.tokenStringVal));
-            node->hashTableItem->varStrVal = token->data.tokenStringVal;
-            printf("aaaaaaaa: %s\n", node->hashTableItem->varStrVal);
-            node->hashTableItem->declareFlag = true;
-            node->hashTableItem->defineFlag = true;
             node->nodeType = NODE_STR_ARG;
+            node->nodeData.stringData = token->data.tokenStringVal;
             break;
         default:
             break;
         }
-
         ruleSequenceString->firstSymbol = ruleSequenceString->firstSymbol->nextSymbol;
         return;
     }
     else if(ruleSequenceString->firstSymbol->symbol == '1')
     {
-        
         node->nodeType = NODE_STRLEN;
         ast_node *str = make_new_node();
         make_new_child(node, str);
@@ -311,8 +301,6 @@ void buildTreeFromRuleSequence(ast_node *node, DynamicString *ruleSequenceString
         buildTreeFromRuleSequence(node->childrenNodes[1], ruleSequenceString, stackOfVariables);
         buildTreeFromRuleSequence(node->childrenNodes[0], ruleSequenceString, stackOfVariables);
     }
-
-   
     
 }
 
@@ -320,177 +308,55 @@ void expressionSemCheck(ast_node *leftOperand, ast_node *rightOperand, treeNodeT
 {
     switch (operatorType)
     {
-    case NODE_MULT:
-        if(leftOperand->nodeType == NODE_INT_ARG)
-        {
-            switch (rightOperand->nodeType)
-            {
-            case NODE_INT_ARG:
-                return;
-            case NODE_NUM_ARG:
-                return;   
-            default:
-                fprintf(stderr,"NOTE: You're trying to mulitply INT by something wrong...\n");
-                errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 0); // TODO think about line
-                break;
-            }
-        }
-        else if(leftOperand->nodeType == NODE_NUM_ARG)
-        {
-            switch (rightOperand->nodeType)
-            {
-            case NODE_INT_ARG:
-                return;
-            case NODE_NUM_ARG:
-                return;   
-            default:
-                fprintf(stderr,"NOTE: You're trying to mulitply NUM by something wrong...\n");
-                errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 0); // TODO think about line
-                break;
-            }
-        }
-        else if(leftOperand->nodeType == NODE_STR_ARG)
-        {
-            fprintf(stderr,"NOTE: You're trying to mulitply STR\n");
-            errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 0);
-        }
-        break;
-    
-    case NODE_DIV:
-        if(leftOperand->nodeType == NODE_INT_ARG)
-            {
-                switch (rightOperand->nodeType)
-                {
-                case NODE_INT_ARG:
-                    if(rightOperand->nodeData.zeroFlag == true) errorExit(ZERO_DIV_ERR, 0);
-                    return;
-                case NODE_NUM_ARG:
-                    if(rightOperand->nodeData.zeroFlag == true) errorExit(ZERO_DIV_ERR, 0);
-                    return;   
-                default:
-                    fprintf(stderr,"NOTE: You're trying to divide INT by something wrong...\n");
-                    errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 0); // TODO think about line
-                    break;
-                }
-            }
-            else if(leftOperand->nodeType == NODE_NUM_ARG)
-            {
-                switch (rightOperand->nodeType)
-                {
-                case NODE_INT_ARG:
-                    if(rightOperand->nodeData.zeroFlag == true) errorExit(ZERO_DIV_ERR, 0);
-                    return;
-                case NODE_NUM_ARG:
-                    if(rightOperand->nodeData.zeroFlag == true) errorExit(ZERO_DIV_ERR, 0);
-                    return;   
-                default:
-                    fprintf(stderr,"NOTE: You're trying to divide NUM by something wrong...\n");
-                    errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 0); // TODO think about line
-                    break;
-                }
-            }
-            else if(leftOperand->nodeType == NODE_STR_ARG)
-            {
-                fprintf(stderr,"NOTE: You're trying to divide STR\n");
-                errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 0);
-            }
-            break;
-        
-    case NODE_MINUS:
-    case NODE_PLUS:
-        if(leftOperand->nodeType == NODE_INT_ARG)
-        {
-            switch (rightOperand->nodeType)
-            {
-            case NODE_INT_ARG:
-                return;
-            case NODE_NUM_ARG:
-                return;   
-            default:
-                fprintf(stderr,"NOTE: You're trying to +/- INT with something wrong...\n");
-                errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 0); // TODO think about line
-                break;
-            }
-        }
-        else if(leftOperand->nodeType == NODE_NUM_ARG)
-        {
-            switch (rightOperand->nodeType)
-            {
-            case NODE_INT_ARG:
-                return;
-            case NODE_NUM_ARG:
-                return;   
-            default:
-                fprintf(stderr,"NOTE: You're trying to +/- NUM with something wrong...\n");
-                errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 0); // TODO think about line
-                break;
-            }
-        }
-        else if(leftOperand->nodeType == NODE_STR_ARG)
-        {
-            fprintf(stderr,"NOTE: You're trying to +/- STR\n");
-            errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 0);
-        }
-        break;
-
-    case NODE_CONC:
-        if(leftOperand->nodeType == NODE_STR_ARG && rightOperand->nodeType == NODE_STR_ARG) return;
-        else
-        {
-            fprintf(stderr, "NOTE: You're trying to concatenate something wrong\n");
-            errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 0);
-        }
-        break;
     case NODE_STRLEN:
-        if(leftOperand->nodeType == NODE_STR_ARG) return;
-        else
+        if(leftOperand->nodeType != NODE_STR_ARG)
         {
-            fprintf(stderr, "NOTE: You're trying to get length of something, what is not string\n");
-            errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 0);
+            printf("ERROR: strlen, should be string argument");
+            exit(11);
         }
         break;
-
+    case NODE_PLUS:
+    case NODE_MINUS:
+    case NODE_MULT:
+    case NODE_DIV:
+        if (leftOperand->nodeType == NODE_STR_ARG || rightOperand->nodeType == NODE_STR_ARG)
+        {
+            printf("ERROR: +|-|/|*, has string as operand");
+            exit(11);
+        }
+        break;
+    case NODE_INTDIV:
+        if (leftOperand->nodeType != NODE_INT_ARG || rightOperand->nodeType == NODE_INT_ARG)
+        {
+            printf("ERROR: //, should have two integer operands");
+            exit(11);
+        }
+        break;
+    case NODE_CONC:
+        if (leftOperand->nodeType != NODE_STR_ARG || rightOperand->nodeType != NODE_STR_ARG)
+        {
+            printf("ERROR: cancatenation, should has two string operands");
+            exit(11);
+        }
+        break;
+    case NODE_LESS:
+    case NODE_LEQ:
+    case NODE_GREATER:
+    case NODE_GEQ:
+        if(leftOperand->nodeType == NODE_STR_ARG && rightOperand->nodeType != NODE_STR_ARG)
+        {
+            printf("ERROR: <|<=|>|>=, if one operand is string second must be string too");
+            exit(11);
+        }
+        if(((leftOperand->nodeType == NODE_INT_ARG || leftOperand->nodeType == NODE_NUM_ARG) && (rightOperand->nodeType != NODE_INT_ARG)) || ((leftOperand->nodeType == NODE_INT_ARG || leftOperand->nodeType == NODE_NUM_ARG) && (leftOperand->nodeType != NODE_NUM_ARG)))
+        {
+            printf("ERROR: <|<=|>|>=, if one operand is int/num second must be int/num too");
+            exit(11);
+        }
+        break;
     case NODE_EQUAL:
     case NODE_NEQ:
-        if(leftOperand->nodeType == NODE_INT_ARG || leftOperand->nodeType == NODE_NUM_ARG)
-        {
-            switch (rightOperand->nodeType)
-            {
-            case NODE_INT_ARG:
-                return;
-            case NODE_NUM_ARG:
-                return;   
-            default:
-                fprintf(stderr,"NOTE: You're trying to compare INT/NUM with something wrong...\n");
-                errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 0); // TODO think about line
-                break;
-            }
-        }
-        if(leftOperand->nodeType == NODE_STR_ARG && rightOperand->nodeType == NODE_STR_ARG) return;
-        else
-        {
-            fprintf(stderr, "NOTE : You're trying to compare string with something wrong\n");
-            errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 0);
-        }
-        break;
-    case NODE_GEQ:
-    case NODE_GREATER:
-    case NODE_LEQ:
-    case NODE_LESS:
-        if(leftOperand->nodeType == NODE_INT_ARG || leftOperand->nodeType == NODE_NUM_ARG)
-        {
-            switch (rightOperand->nodeType)
-            {
-            case NODE_INT_ARG:
-                return;
-            case NODE_NUM_ARG:
-                return;   
-            default:
-                fprintf(stderr,"NOTE: You're trying to compare INT/NUM with something wrong...\n");
-                errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 0); // TODO think about line
-                break;
-            }
-        }
+        // TODO think about NIL and equal 
         break;
     default:
         break;
@@ -502,26 +368,125 @@ void processNode(ast_node *node)
     switch (node->nodeType)
     {
     case NODE_STRLEN:
-        //printf("test2: %s\n", node->childrenNodes[0]->nodeData.stringData);
         expressionSemCheck(node->childrenNodes[0], NULL, NODE_STRLEN);
         node->nodeData.intData = strlen(node->childrenNodes[0]->nodeData.stringData);
-        //printf("test3\n");
+        node->nodeType = NODE_INT_ARG;
         break;
     case NODE_PLUS:
         expressionSemCheck(node->childrenNodes[0], node->childrenNodes[1], NODE_PLUS);
-        node->nodeData.intData = node->childrenNodes[0]->nodeData.intData + node->childrenNodes[1]->nodeData.intData;
+        if(node->childrenNodes[0]->nodeType == NODE_NUM_ARG)
+        {
+            if(node->childrenNodes[1]->nodeType == NODE_NUM_ARG)
+            {
+                node->nodeData.doubleData = node->childrenNodes[0]->nodeData.doubleData + node->childrenNodes[1]->nodeData.doubleData;
+                node->nodeType = NODE_NUM_ARG;
+            }
+            else
+            {
+                node->nodeData.doubleData = node->childrenNodes[0]->nodeData.doubleData + node->childrenNodes[1]->nodeData.intData;
+                node->nodeType = NODE_NUM_ARG;
+            }
+        }
+        else
+        {
+            if(node->childrenNodes[1]->nodeType == NODE_NUM_ARG)
+            {
+                node->nodeData.doubleData = node->childrenNodes[0]->nodeData.intData + node->childrenNodes[1]->nodeData.doubleData;
+                node->nodeType = NODE_NUM_ARG;
+            }
+            else
+            {
+                node->nodeData.intData = node->childrenNodes[0]->nodeData.intData + node->childrenNodes[1]->nodeData.intData;
+                node->nodeType = NODE_INT_ARG;
+            }
+        }
         break;
     case NODE_MINUS:
         expressionSemCheck(node->childrenNodes[0], node->childrenNodes[1], NODE_MINUS);
-        node->nodeData.intData = node->childrenNodes[0]->nodeData.intData - node->childrenNodes[1]->nodeData.intData;
+        if(node->childrenNodes[0]->nodeType == NODE_NUM_ARG)
+        {
+            if(node->childrenNodes[1]->nodeType == NODE_NUM_ARG)
+            {
+                node->nodeData.doubleData = node->childrenNodes[0]->nodeData.doubleData - node->childrenNodes[1]->nodeData.doubleData;
+                node->nodeType = NODE_NUM_ARG;
+            }
+            else
+            {
+                node->nodeData.doubleData = node->childrenNodes[0]->nodeData.doubleData - node->childrenNodes[1]->nodeData.intData;
+                node->nodeType = NODE_NUM_ARG;
+            }
+        }
+        else
+        {
+            if(node->childrenNodes[1]->nodeType == NODE_NUM_ARG)
+            {
+                node->nodeData.doubleData = node->childrenNodes[0]->nodeData.intData - node->childrenNodes[1]->nodeData.doubleData;
+                node->nodeType = NODE_NUM_ARG;
+            }
+            else
+            {
+                node->nodeData.intData = node->childrenNodes[0]->nodeData.intData - node->childrenNodes[1]->nodeData.intData;
+                node->nodeType = NODE_INT_ARG;
+            }
+        }
         break;
     case NODE_MULT:
         expressionSemCheck(node->childrenNodes[0], node->childrenNodes[1], NODE_MULT);
-        node->nodeData.intData = node->childrenNodes[0]->nodeData.intData * node->childrenNodes[1]->nodeData.intData;
+        if(node->childrenNodes[0]->nodeType == NODE_NUM_ARG)
+        {
+            if(node->childrenNodes[1]->nodeType == NODE_NUM_ARG)
+            {
+                node->nodeData.doubleData = node->childrenNodes[0]->nodeData.doubleData * node->childrenNodes[1]->nodeData.doubleData;
+                node->nodeType = NODE_NUM_ARG;
+            }
+            else
+            {
+                node->nodeData.doubleData = node->childrenNodes[0]->nodeData.doubleData * node->childrenNodes[1]->nodeData.intData;
+                node->nodeType = NODE_NUM_ARG;
+            }
+        }
+        else
+        {
+            if(node->childrenNodes[1]->nodeType == NODE_NUM_ARG)
+            {
+                node->nodeData.doubleData = node->childrenNodes[0]->nodeData.intData * node->childrenNodes[1]->nodeData.doubleData;
+                node->nodeType = NODE_NUM_ARG;
+            }
+            else
+            {
+                node->nodeData.intData = node->childrenNodes[0]->nodeData.intData * node->childrenNodes[1]->nodeData.intData;
+                node->nodeType = NODE_INT_ARG;
+            }
+        }
         break;
     case NODE_DIV:
         expressionSemCheck(node->childrenNodes[0], node->childrenNodes[1], NODE_DIV);
-        node->nodeData.intData = node->childrenNodes[0]->nodeData.intData / node->childrenNodes[1]->nodeData.intData;
+        if(node->childrenNodes[0]->nodeType == NODE_NUM_ARG)
+        {
+            if(node->childrenNodes[1]->nodeType == NODE_NUM_ARG)
+            {
+                node->nodeData.doubleData = node->childrenNodes[0]->nodeData.doubleData / node->childrenNodes[1]->nodeData.doubleData;
+                node->nodeType = NODE_NUM_ARG;
+            }
+            else
+            {
+                node->nodeData.doubleData = node->childrenNodes[0]->nodeData.doubleData / node->childrenNodes[1]->nodeData.intData;
+                node->nodeType = NODE_NUM_ARG;
+            }
+        }
+        else
+        {
+            if(node->childrenNodes[1]->nodeType == NODE_NUM_ARG)
+            {
+                node->nodeData.doubleData = node->childrenNodes[0]->nodeData.intData / node->childrenNodes[1]->nodeData.doubleData;
+                node->nodeType = NODE_NUM_ARG;
+            }
+            else
+            {
+                node->nodeData.intData = node->childrenNodes[0]->nodeData.intData / node->childrenNodes[1]->nodeData.intData;
+                node->nodeType = NODE_INT_ARG;
+            }
+        }
         break;
     case NODE_INTDIV:
         expressionSemCheck(node->childrenNodes[0], node->childrenNodes[1], NODE_INTDIV);
@@ -529,73 +494,26 @@ void processNode(ast_node *node)
         break;
     case NODE_CONC:
         expressionSemCheck(node->childrenNodes[0], node->childrenNodes[1], NODE_CONC);
-        node->nodeData.stringData = strcat(node->childrenNodes[0]->nodeData.stringData, node->childrenNodes[2]->nodeData.stringData);
+        node->nodeData.stringData = strcat(node->childrenNodes[0]->nodeData.stringData, node->childrenNodes[1]->nodeData.stringData);
+        node->nodeType = NODE_STR_ARG;
         break;
     case NODE_LESS:
         expressionSemCheck(node->childrenNodes[0], node->childrenNodes[1], NODE_LESS);
-        if(node->childrenNodes[0]->nodeData.intData < node->childrenNodes[1]->nodeData.intData)
-        {
-            node->nodeData.intData = 1;
-        }
-        else
-        {
-            node->nodeData.nilFlag = true;
-        }
         break;
     case NODE_LEQ:
         expressionSemCheck(node->childrenNodes[0], node->childrenNodes[1], NODE_LEQ);
-        if(node->childrenNodes[0]->nodeData.intData <= node->childrenNodes[1]->nodeData.intData)
-        {
-            node->nodeData.intData = 1;
-        }
-        else
-        {
-            node->nodeData.nilFlag = true;
-        }
         break;
     case NODE_GREATER:
         expressionSemCheck(node->childrenNodes[0], node->childrenNodes[1], NODE_GREATER);
-        if(node->childrenNodes[0]->nodeData.intData > node->childrenNodes[1]->nodeData.intData)
-        {
-            node->nodeData.intData = 1;
-        }
-        else
-        {
-            node->nodeData.nilFlag = true;
-        }
         break;
     case NODE_GEQ:
         expressionSemCheck(node->childrenNodes[0], node->childrenNodes[1], NODE_GEQ);
-        if(node->childrenNodes[0]->nodeData.intData >= node->childrenNodes[1]->nodeData.intData)
-        {
-            node->nodeData.intData = 1;
-        }
-        else
-        {
-            node->nodeData.nilFlag = true;
-        }
         break;
     case NODE_NEQ:
         expressionSemCheck(node->childrenNodes[0], node->childrenNodes[1], NODE_NEQ);
-        if(node->childrenNodes[0]->nodeData.intData != node->childrenNodes[1]->nodeData.intData)
-        {
-            node->nodeData.intData = 1;
-        }
-        else
-        {
-            node->nodeData.nilFlag = true;
-        }
         break;
     case NODE_EQUAL:
         expressionSemCheck(node->childrenNodes[0], node->childrenNodes[1], NODE_EQUAL);
-        if(node->childrenNodes[0]->nodeData.intData == node->childrenNodes[1]->nodeData.intData)
-        {
-            node->nodeData.intData = 1;
-        }
-        else
-        {
-            node->nodeData.nilFlag = true;
-        }
         break;
     default:
         break;
@@ -605,7 +523,7 @@ void processNode(ast_node *node)
 
 void simplifyTheTree(ast_node *node)
 {
-    if(node->nodeType == NODE_ID || node->nodeType == NODE_INT_ARG || node->nodeType == NODE_NUM_ARG || node->nodeType == NODE_STR_ARG)
+    if(node->nodeType == NODE_INT_ARG || node->nodeType == NODE_NUM_ARG || node->nodeType == NODE_STR_ARG)
     {
         return;
     }
@@ -623,9 +541,9 @@ void simplifyTheTree(ast_node *node)
     }
 }
 
-
 ast_node *bottomUpAnalysis(htab_list_t* hashTableList, FILE *f, DynamicString *dynamicString, StackTokens *tokenStack)
 {   
+    // create stack for operands(IDs/consts)
     StackTokens stackOfVariables;
     initStackTokens(&stackOfVariables);
     // create stack for none terminals
@@ -646,7 +564,6 @@ ast_node *bottomUpAnalysis(htab_list_t* hashTableList, FILE *f, DynamicString *d
     pushNoneTerminalElement(&stackOfNoneTerminals, NONE_TERMINAL_DOLLAR);
     topNoneTerminal = stackOfNoneTerminals.top->element;
     expressionToken = getToken(f, dynamicString, tokenStack);
-
     nextNoneTerminal = transformTokenToNoneTerminal(expressionToken->type);
 
     // main cycle that processes expression 
@@ -664,23 +581,24 @@ ast_node *bottomUpAnalysis(htab_list_t* hashTableList, FILE *f, DynamicString *d
                 }
                 else
                 {
-                    errorExit(BAD_SYNTAX_ERR, expressionToken->line);
+                    printf("error");
+                    exit(1);
                 }
                 break;
             
             case 1: // reduce by the rule
-                printf("Make reduce!!! Top is: %d\n", topNoneTerminal);
+                //printf("Make reduce!!! Top is: %d\n", topNoneTerminal);
                 reduceByTheRule(&topNoneTerminal, &stackOfNoneTerminals, &ruleSequenceString);
                 continue;
 
             case 2: // shift 
-                printf("Make shift!!! Top is: %d\n", topNoneTerminal);
-                shiftElement(expressionToken, hashTableList, nextNoneTerminal, &stackOfVariables, &stackOfNoneTerminals);
+                //printf("Make shift!!! Top is: %d\n", topNoneTerminal);
+                shiftElement(expressionToken, nextNoneTerminal, &stackOfVariables, &stackOfNoneTerminals, hashTableList);
                 topNoneTerminal = stackOfNoneTerminals.top->element;
                 break;
 
             case 3: // equal
-                shiftElement(expressionToken, hashTableList, nextNoneTerminal, &stackOfVariables, &stackOfNoneTerminals);
+                shiftElement(expressionToken, nextNoneTerminal, &stackOfVariables, &stackOfNoneTerminals, hashTableList);
                 topNoneTerminal = stackOfNoneTerminals.top->element;
                 break;    
             default:
@@ -689,47 +607,19 @@ ast_node *bottomUpAnalysis(htab_list_t* hashTableList, FILE *f, DynamicString *d
         expressionToken = getToken(f, dynamicString, tokenStack);
         nextNoneTerminal = transformTokenToNoneTerminal(expressionToken->type);
     }
-    // token.type = TOKEN_END
-
+    
     // reversed rule sequence string 
     DynamicString reversedRuleSequenceString;
     DynamicStringInit(&reversedRuleSequenceString);
     DynamicStringReverse(&ruleSequenceString, &reversedRuleSequenceString);
-    printDynamicString(&ruleSequenceString);
+    //printDynamicString(&ruleSequenceString);
     DynamicStringDispose(&ruleSequenceString);
-    printDynamicString(&reversedRuleSequenceString);
-    // printf("%d\n", popTokenStackTokens(&stackOfVariables)->data.tokenIntVal);
-    // printf("%d\n", popTokenStackTokens(&stackOfVariables)->data.tokenIntVal);
-    //printf("%d\n", popTokenStackTokens(&stackOfVariables)->data.tokenIntVal);
+    //printDynamicString(&reversedRuleSequenceString);
     ast_node *expressionTree = make_new_node();
     buildTreeFromRuleSequence(expressionTree, &reversedRuleSequenceString, &stackOfVariables);
-    printAST(expressionTree);
+    //printAST(expressionTree);
     simplifyTheTree(expressionTree);
-
-    
-    
-    if(expressionTree->hashTableItem->declareFlag && !expressionTree->hashTableItem->defineFlag)
-    {
-        expressionTree->nodeType = NODE_NIL_ARG;
-    }
-    else if(expressionTree->nodeData.zeroFlag)
-    {
-        expressionTree->nodeType = NODE_ZERO_ARG;
-    }
-    else if(expressionTree->nodeData.doubleData && (!expressionTree->nodeData.intData && !expressionTree->nodeData.stringData))
-    {
-        expressionTree->nodeType = NODE_NUM_ARG;
-    }
-    else if(expressionTree->nodeData.intData && (!expressionTree->nodeData.doubleData && !expressionTree->nodeData.stringData))
-    {
-        expressionTree->nodeType = NODE_INT_ARG;
-    }
-    else if(expressionTree->nodeData.stringData && (!expressionTree->nodeData.intData && !expressionTree->nodeData.doubleData))
-    {
-        expressionTree->nodeType = NODE_STR_ARG;
-    }
-    
-    printAST(expressionTree);
+    //printAST(expressionTree);
     return expressionTree;
 }
 

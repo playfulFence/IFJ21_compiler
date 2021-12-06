@@ -6,6 +6,7 @@
 #include "stack_p_t.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include "string.h"
 
 char *tokens[] = {"ID", ":", ",", "INT", "NUM", "STR", "WHILE", "DO", "IF", "THEN", "ELSE", "END","NUM_KW","INT_KW","STR_KW", "FUNC", "GLOBAL", "LOCAL", "NIL", "REQUAIRE", "RETURN", "#", "+","-","*","/","//","..","<",">","<=",">=","==","=","~=","(",")","EOF"};
 
@@ -21,7 +22,7 @@ void testScanner(FILE *f)
     {
         if((token->type == TOKEN_ID) || (token->type == TOKEN_STR))
         {
-            printf("[[TYPE: %10s || STRDATA: %10s ]]\n", tokens[token->type], token->data.tokenStringVal);    
+            printf("[[TYPE: %10s || STRDATA: %10s  STRLEN: %10d]]\n", tokens[token->type], token->data.tokenStringVal);    
         }
         else if(token->type == TOKEN_INT)
         {
@@ -51,11 +52,12 @@ int main(int argc, char** argv)
     htab_t * symtable = htab_init(43969);
     // open file to read program
     FILE* prog = openFile(argc, argv);
-    //testScanner(prog);
-     // call parser to make abastract syntax tree
-    ast_node *ast = parseAST(symtable, prog);
-    printAST(ast);
-    //printf("GDFSDFSFDSfg\n");
+   // testScanner(prog);
+    //  // call parser to make abastract syntax tree
+     ast_node *ast = parseAST(symtable, prog);
+     printf("GDFSDFSFDSfg\n");
+     printAST(ast);
+    
     
     
     // ast_node *ast = make_new_node();

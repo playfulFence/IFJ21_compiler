@@ -50,7 +50,7 @@ token_t *getToken(FILE *f, DynamicString *dynamicString, StackTokens *tokenStack
     // FSM state variable 
     fsmState currentState = START_STATE;
     // char variable to read symbol from input
-    char symbol;
+    int symbol = 0;
     /* Kirill */
     int lineCounter = 1;
     /* Kirill */

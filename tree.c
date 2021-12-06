@@ -35,29 +35,50 @@ void print_nodes(ast_node *ast, int indent)
     {   
         printf(" ");
     }
-    if(ast->nodeType == NODE_ID || ast->nodeType == NODE_NIL_ARG)
+    // if(ast->nodeType == NODE_ID || ast->nodeType == NODE_NIL_ARG)
+    // {
+    //     if(ast->hashTableItem->varIntVal != 0)
+    //     {
+    //         printf("%s(%d)\n", nodes[ast->nodeType], ast->hashTableItem->varIntVal);
+    //     }
+    //     else if(ast->hashTableItem->varIntVal != 0)
+    //     {
+    //         printf("%s(%f)\n", nodes[ast->nodeType], ast->hashTableItem->varNumVal);
+    //     }
+    //     else if(ast->nodeData.stringData != NULL)
+    //     {
+    //         char *ch = ast->nodeData.stringData;
+    //         printf("%s(%s)\n", nodes[ast->nodeType], ch);
+    //     }
+    // }
+    // else if(ast->nodeType == NODE_INT_ARG )
+    // {
+    //     printf("%s(%.2d)\n", nodes[ast->nodeType], ast->nodeData.intData);
+    // }
+    // else if (ast->nodeType == NODE_NUM_ARG)
+    // {
+    //     printf("%s(%.2f)\n", nodes[ast->nodeType], ast->nodeData.doubleData);
+    // }
+    // else if(ast->nodeType == NODE_STR_ARG)
+    // {
+    //     char *ch = "FHJFJGHFJ";
+    //     printf("---------%s(%s)\n", nodes[ast->nodeType], ch);
+    // }
+    //else
+  //  {
+        //printf("%s(%s)\n", nodes[ast->nodeType], ast->nodeData.stringData);
+//    }
+    if(ast->nodeType == NODE_INT_ARG)
     {
-        if(ast->hashTableItem->varIntVal != 0)
-        {
-            printf("%s(%d)\n", nodes[ast->nodeType], ast->hashTableItem->varIntVal);
-        }
-        else if(ast->hashTableItem->varIntVal != 0)
-        {
-            printf("%s(%f)\n", nodes[ast->nodeType], ast->hashTableItem->varNumVal);
-        }
-        else if(ast->nodeData.stringData != NULL)
-        {
-            char *ch = ast->nodeData.stringData;
-            printf("%s(%s)\n", nodes[ast->nodeType], ch);
-        }
+        printf("%s(%d)\n", nodes[ast->nodeType], ast->nodeData.intData);
     }
-    else if(ast->nodeType == NODE_INT_ARG || ast->nodeType == NODE_NUM_ARG)
+    else if(ast->nodeType == NODE_NUM_ARG)
     {
-        printf("%s(%.2f)\n", nodes[ast->nodeType], ast->hashTableItem->varNumVal);
+        printf("%s(%f)\n", nodes[ast->nodeType], ast->nodeData.doubleData);
     }
     else if(ast->nodeType == NODE_STR_ARG)
     {
-        printf("%s(%s)\n", nodes[ast->nodeType], ast->hashTableItem->varStrVal);
+        printf("%s(%s)\n", nodes[ast->nodeType], ast->nodeData.stringData);
     }
     else
     {

@@ -78,6 +78,7 @@ FILE* openFile(int argc, char** argv)
 
 int detectExpressionOrFunctionCall(tokenType_t tokenType, FILE *f, DynamicString *dynamicString, StackTokens *tokenStack)
 {
+    // TODO expression is only one variable!!!!
     token_t *nextToken;
     switch (tokenType)
     {
@@ -666,12 +667,9 @@ void processVariableDefStatement(ast_node *varDefNode, htab_list_t* hashTableLis
     {
         printf("593\n");
         ungetToken(token, tokenStack);
+        variableNode->hashTableItem->type = TYPE_VARIABLE;
         variableNode->hashTableItem->declareFlag = true;    // means that value is NIL!!!!
         variableNode->hashTableItem->defineFlag = false;        // p.s. we're so smart to make new flag
-        variableNode->nodeData.nilFlag = true;
-        variableNode->nodeData.zeroFlag = false;
-        variableNode->hashTableItem->datatype = DATATYPE_NIL;
-        variableNode->nodeType = NODE_NIL_ARG;
         return;
     }
     // get next token, should be start of expression or start of function call 
@@ -679,40 +677,46 @@ void processVariableDefStatement(ast_node *varDefNode, htab_list_t* hashTableLis
     ast_node *valueNode = make_new_node();
     switch (detectExpressionOrFunctionCall(token->type, f, dynamicString, tokenStack))
     {
-    case 1: // expression
-        ungetToken(token, tokenStack);
-        valueNode = bottomUpAnalysis(hashTableList, f, dynamicString, tokenStack); // STOPPED HERE!!!
-        if(valueNode->nodeType == NODE_INT_ARG) 
-        {
-            variableNode->hashTableItem->varIntVal = valueNode->hashTableItem->varIntVal;
-            variableNode->hashTableItem->varNumVal = valueNode->hashTableItem->varNumVal;
-        }
-        else if(valueNode->nodeType == NODE_NUM_ARG)
-        {
-            variableNode->hashTableItem->varNumVal = valueNode->hashTableItem->varNumVal;
-        }
-        else if(valueNode->nodeType == NODE_STR_ARG)
-        {
-            variableNode->hashTableItem->varStrVal = malloc(sizeof(char) * strlen(valueNode->hashTableItem->varStrVal));
-            variableNode->hashTableItem->varStrVal = valueNode->hashTableItem->varStrVal;
-        }
+        case 1: // expression
+            printf("token is: %d\n", token->type);
+            ungetToken(token, tokenStack);
+            printf("GO to expression\n");
+            valueNode = bottomUpAnalysis(hashTableList, f, dynamicString, tokenStack); 
+            variableNode->nodeType = valueNode->nodeType;
+            // TODO check datatype compatibility
+            switch (variableNode->nodeType)
+            {
+                case NODE_INT_ARG:
+                    variableNode->nodeData.intData = valueNode->nodeData.intData;
+                    variableNode->hashTableItem->varIntVal = variableNode->nodeData.intData;
+                    break;
+                case NODE_NUM_ARG:
+                    variableNode->nodeData.doubleData = valueNode->nodeData.doubleData;
+                    variableNode->hashTableItem->varNumVal = variableNode->nodeData.doubleData;
+                    break;
+                case NODE_STR_ARG:
+                    variableNode->nodeData.stringData = valueNode->nodeData.stringData;
+                    variableNode->hashTableItem->varStrVal = malloc(sizeof(char) * strlen(variableNode->nodeData.stringData));
+                    strcpy(variableNode->hashTableItem->varStrVal, variableNode->nodeData.stringData);
+                    break;
+                default:
+                    break;
+            }
 
-        // variableNode->hashTableItem->varIntVal = valueNode->hashTableItem->varIntVal;
-        // variableNode->hashTableItem->varNumVal = valueNode->hashTableItem->varNumVal ? valueNode->hashTableItem->varNumVal : valueNode->hashTableItem->varIntVal;
-        
-        // variableNode->hashTableItem->varStrVal = valueNode->hashTableItem->varStrVal;
-        variableNode->nodeType = valueNode->nodeType;
-        
-        break;
-    case 2: // function call 
-        ungetToken(token, tokenStack);
-        processFuncCall(varDefNode, hashTableList, f, dynamicString, tokenStack);
-        break;
-    default:
-        fprintf(stderr, "NOTE processVariableDefStatement - error with assignment\n");
-        errorExit(SEMANTIC_ANOTHER_ERR, token->line);
-        break;
+            break;
+        case 2: // function call 
+            // TODO UNCHECKED 
+            ungetToken(token, tokenStack);
+            processFuncCall(varDefNode, hashTableList, f, dynamicString, tokenStack);
+            break;
+        default:
+            fprintf(stderr, "NOTE processVariableDefStatement - error with assignment\n");
+            errorExit(SEMANTIC_ANOTHER_ERR, token->line);
+            break;
     } 
+    variableNode->hashTableItem->type = TYPE_VARIABLE;
+    variableNode->hashTableItem->declareFlag = true; 
+    variableNode->hashTableItem->defineFlag = true; 
 }
 
 void processStatement(ast_node *funcDefNode, htab_list_t* hashTableList, FILE *f, DynamicString *dynamicString, StackTokens *tokenStack)
@@ -1074,13 +1078,10 @@ void processFunctionDeclaration(ast_node *ast, htab_list_t* hashTableList, FILE 
         // // ERROR
         // printf("ERROR function declaration - no : \n");
         ungetToken(token, tokenStack);
-        printf("928\n");
         funcDeclNode->hashTableItem->declareFlag = true;
         funcDeclNode->hashTableItem->defineFlag = false;
-        printf("931\n");
         return;
     }
-    printf("932\n");
     // process list of return datatypes 
     processReturnDatatypesList(funcDeclNode, hashTableList, f, dynamicString, tokenStack);
     printf("935\n");
@@ -1230,27 +1231,15 @@ ast_node *parseAST(htab_t *symTable, FILE *f)
 {
     //insertBuiltIn(symTable);
     StackTokens tokenStack;
-    printf("1\n");
     initStackTokens(&tokenStack);
-    printf("2\n");
     DynamicString dynamicString;
-    printf("3\n");
     DynamicStringInit(&dynamicString);
-    printf("4\n");
     htab_list_t *hashTableList = initList();
-    printf("5\n");
     htab_list_item_t *newItem = createItem(symTable);
-    printf("6\n");
     insertFirst(hashTableList, newItem);
-    printf("7\n");
     ast_node *ast = make_new_node();
-    printf("8\n");
     ast->nodeType = NODE_PROG;
-    printf("9\n");
     processProgramTemplate(ast, hashTableList, f, &dynamicString, &tokenStack);
-    printf("10\n");
-    //testScope(hashTableList);
-
     return ast;
 }
 
