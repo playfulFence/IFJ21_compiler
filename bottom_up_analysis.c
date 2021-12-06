@@ -192,7 +192,7 @@ void shiftElement(token_t *expressionToken, htab_list_t* hashTableList, NoneTerm
             else if(thisIDvar->datatype == DATATYPE_NIL)
             {
                 expressionToken->type = TOKEN_NIL;
-                expressionToken->data.nilFlag = true;
+                //expressionToken->data.nilFlag = true;
             }
         }
         pushTokenStackTokens(stackOfVaruables, expressionToken);
@@ -211,24 +211,29 @@ void buildTreeFromRuleSequence(ast_node *node, DynamicString *ruleSequenceString
         {
         case TOKEN_NUM:
             node->nodeData.doubleData = token->data.tokenNumVal;
+            //node->nodeType = NODE_NUM_ARG;
             break;
         case TOKEN_INT:
             node->nodeData.intData = token->data.tokenIntVal;   
+            //node->nodeType = NODE_INT_ARG;
             break;
         case TOKEN_STR:
             //strcpy(node->nodeData.stringData, token->data.tokenStringVal);
             printf("aaaaaaaa: %s\n", token->data.tokenStringVal);
             node->nodeData.stringData = token->data.tokenStringVal;
+            //node->nodeType = NODE_STR_ARG;
             printf("aaaaaaaa: %s\n", node->nodeData.stringData);
             break;
         default:
             break;
         }
+
         ruleSequenceString->firstSymbol = ruleSequenceString->firstSymbol->nextSymbol;
         return;
     }
     else if(ruleSequenceString->firstSymbol->symbol == '1')
     {
+        
         node->nodeType = NODE_STRLEN;
         ast_node *str = make_new_node();
         make_new_child(node, str);
@@ -290,6 +295,8 @@ void buildTreeFromRuleSequence(ast_node *node, DynamicString *ruleSequenceString
         buildTreeFromRuleSequence(node->childrenNodes[1], ruleSequenceString, stackOfVariables);
         buildTreeFromRuleSequence(node->childrenNodes[0], ruleSequenceString, stackOfVariables);
     }
+
+   
     
 }
 
@@ -603,9 +610,6 @@ void simplifyTheTree(ast_node *node)
 
 ast_node *bottomUpAnalysis(htab_list_t* hashTableList, FILE *f, DynamicString *dynamicString, StackTokens *tokenStack)
 {   
-    // create new node, that will be return with all information about final value of expression 
-    ast_node *returnExpressionNode = make_new_node();
-    // create stack for operands(IDs/consts)
     StackTokens stackOfVariables;
     initStackTokens(&stackOfVariables);
     // create stack for none terminals
@@ -680,6 +684,7 @@ ast_node *bottomUpAnalysis(htab_list_t* hashTableList, FILE *f, DynamicString *d
     // printf("%d\n", popTokenStackTokens(&stackOfVariables)->data.tokenIntVal);
     //printf("%d\n", popTokenStackTokens(&stackOfVariables)->data.tokenIntVal);
     ast_node *expressionTree = make_new_node();
+    expressionTree->nodeData.nilFlag = false;
     buildTreeFromRuleSequence(expressionTree, &reversedRuleSequenceString, &stackOfVariables);
     printAST(expressionTree);
     simplifyTheTree(expressionTree);
@@ -693,8 +698,7 @@ ast_node *bottomUpAnalysis(htab_list_t* hashTableList, FILE *f, DynamicString *d
     {
         expressionTree->nodeType = NODE_ZERO_ARG;
     }
-    else
-    if(expressionTree->nodeData.doubleData && (!expressionTree->nodeData.intData && !expressionTree->nodeData.stringData))
+    else if(expressionTree->nodeData.doubleData && (!expressionTree->nodeData.intData && !expressionTree->nodeData.stringData))
     {
         expressionTree->nodeType = NODE_NUM_ARG;
     }

@@ -7,55 +7,55 @@
 
 void testScope(htab_list_t* hashTableList)
 {
-    htab_list_t* testList = initList();
-    htab_t* testHtab = htab_init(43969);
-    htab_list_item_t* buffer = createItem(testHtab);
-    insertFirst(testList, buffer);
+    // htab_list_t* testList = initList();
+    // htab_t* testHtab = htab_init(43969);
+    // htab_list_item_t* buffer = createItem(testHtab);
+    // insertFirst(testList, buffer);
 
-    htab_lookup_add(testList->first->symtable, "keyword");
-    htab_lookup_add(testList->first->symtable, "yaYeblan");
+    // htab_lookup_add(testList->first->symtable, "keyword");
+    // htab_lookup_add(testList->first->symtable, "yaYeblan");
 
-    listSearch(testList, "keyword", FROM_FIRST)->countOfArgs = 6;
+    // listSearch(testList, "keyword", FROM_FIRST)->countOfArgs = 6;
 
-    htab_t* testShit = htab_init(43969);
-    htab_list_item_t* wtf = createItem(testShit);
-    insertFirst(testList, wtf);
+    // htab_t* testShit = htab_init(43969);
+    // htab_list_item_t* wtf = createItem(testShit);
+    // insertFirst(testList, wtf);
 
-    htab_lookup_add(testList->first->symtable, "Maxon");
-    htab_lookup_add(testList->first->symtable, "keyword");
-    htab_lookup_add(testList->first->symtable, "Kiriyha");
+    // htab_lookup_add(testList->first->symtable, "Maxon");
+    // htab_lookup_add(testList->first->symtable, "keyword");
+    // htab_lookup_add(testList->first->symtable, "Kiriyha");
 
     
-    listSearch(testList, "Maxon", FROM_FIRST)->countOfArgs = 29;
+    // listSearch(testList, "Maxon", FROM_FIRST)->countOfArgs = 29;
 
-    if(listSearch(testList, "Maxon", FROM_FIRST))
-    {
-        if(listSearch(testList, "Maxon", FROM_FIRST)->countOfArgs == 29)
-        {
-            printf("Всё ок, заебал\n");
-        }
-        else printf("отъебись\n");
-    }
-    else printf("пососи\n");
+    // if(listSearch(testList, "Maxon", FROM_FIRST))
+    // {
+    //     if(listSearch(testList, "Maxon", FROM_FIRST)->countOfArgs == 29)
+    //     {
+    //         printf("Всё ок, заебал\n");
+    //     }
+    //     else printf("отъебись\n");
+    // }
+    // else printf("пососи\n");
 
 
-    listSearch(testList, "yaYeblan", FROM_FIRST)->countOfArgs = 228;
+    // listSearch(testList, "yaYeblan", FROM_FIRST)->countOfArgs = 228;
     
 
-    htab_lookup_add(testList->first->next->symtable, "Snova tuta");
+    // htab_lookup_add(testList->first->next->symtable, "Snova tuta");
 
 
-    htab_t* penis = htab_init(43969);
-    htab_list_item_t* penisItem = createItem(penis);
-    insertFirst(testList, penisItem);
+    // htab_t* penis = htab_init(43969);
+    // htab_list_item_t* penisItem = createItem(penis);
+    // insertFirst(testList, penisItem);
 
-    htab_lookup_add(testList->first->symtable, "Я не дурак");
-    htab_lookup_add(testList->first->next->next->symtable, "Ну может хватит?");
-    htab_find(testList->first->next->next->symtable, "Ну может хватит?")->countOfArgs = 40;
+    // htab_lookup_add(testList->first->symtable, "Я не дурак");
+    // htab_lookup_add(testList->first->next->next->symtable, "Ну может хватит?");
+    // htab_find(testList->first->next->next->symtable, "Ну может хватит?")->countOfArgs = 40;
     
 
 
-    htab_list_item_t* tmpLooker = testList->first;
+    htab_list_item_t* tmpLooker = hashTableList->first;
 
     while(tmpLooker)
     {
@@ -274,6 +274,7 @@ void processFuncCall(ast_node *funcCallNode, htab_list_t* hashTableList, FILE *f
         errorExit(BAD_SYNTAX_ERR, token->line);
 
     }
+    
     if(!listSearch(hashTableList, token->data.tokenStringVal, FROM_FIRST))
     {
         fprintf(stderr, "NOTE: Function with name %s wasn't found\n", token->data.tokenStringVal);
@@ -285,10 +286,11 @@ void processFuncCall(ast_node *funcCallNode, htab_list_t* hashTableList, FILE *f
         errorExit(SEMANTIC_ANOTHER_ERR, token->line);
     }
 
+
     funcCallNode->nodeData.stringData = token->data.tokenStringVal;
-    copyDataFuncCall(listSearch(hashTableList, token->data.tokenStringVal, FROM_FIRST), funcCallNode->hashTableItem);
+    funcCallNode->hashTableItem = copyDataFuncCall(listSearch(hashTableList, token->data.tokenStringVal, FROM_FIRST), funcCallNode->hashTableItem);
 
-
+    
     // get token, should be (
     token = getToken(f, dynamicString, tokenStack);
     if(token->type != TOKEN_L_BR)
@@ -298,6 +300,8 @@ void processFuncCall(ast_node *funcCallNode, htab_list_t* hashTableList, FILE *f
     }
 
     token = getToken(f, dynamicString, tokenStack);
+
+
     int countActualArgs = 0; 
     // get token, if it's not ) token, process arguments
     while (token->type != TOKEN_R_BR)
@@ -385,12 +389,19 @@ void processFuncCall(ast_node *funcCallNode, htab_list_t* hashTableList, FILE *f
         countActualArgs++;
     }
     
+    printf("\n\n");
+    printf("-----------------------");
+    testScope(hashTableList);
+    printf("-----------------------");
+    printf("\n\n");
+    
     if(countActualArgs < funcCallNode->hashTableItem->countOfArgs)
         {
             fprintf(stderr, "NOTE: In function %s\n",token->data.tokenStringVal);
             errorExit(SEMANTIC_PARAM_COUNT_ERR, token->line);
         }
 
+    
 }
 
 // <statement> --> id = <expression_or_func_call>
@@ -704,6 +715,7 @@ void processStatement(ast_node *funcDefNode, htab_list_t* hashTableList, FILE *f
     case TOKEN_ID:
         // get next token to detect type of statement
         nextToken = getToken(f, dynamicString, tokenStack);
+        printf("Здуся3\n%s\n\n",funcDefNode->nodeData.stringData);
         if (nextToken->type == TOKEN_COMMA)
         {
             // return token, should be processed again
@@ -735,6 +747,7 @@ void processStatement(ast_node *funcDefNode, htab_list_t* hashTableList, FILE *f
             // set type of the node to function call node
             statementNode->nodeType = NODE_FUNC_CALL;
             // process function call statement 
+             printf("Здуся4\n%s\n\n",funcDefNode->nodeData.stringData);
             processFuncCall(statementNode, hashTableList, f, dynamicString, tokenStack); // <statement> --> id (<list_of_parameters>)
         }
         else
@@ -1062,10 +1075,12 @@ void processFunctionDefinition(ast_node *ast, htab_list_t *hashTableList, FILE *
     funcDefNode->nodeType = NODE_FUNC_DEF;
     //get next token, should be ID
     token_t *token = getToken(f, dynamicString, tokenStack);
+    printf("\n\n\n%s\n\n\n", token->data.tokenStringVal);
     if(token->type != TOKEN_ID)
     {
         // ERROR
         printf("ERROR function definition - no function ID\n");
+        errorExit(BAD_SYNTAX_ERR, token->line);
     }
 
     funcDefNode->nodeData.stringData = token->data.tokenStringVal;
@@ -1102,6 +1117,7 @@ void processFunctionDefinition(ast_node *ast, htab_list_t *hashTableList, FILE *
         processParametersList(funcDefNode, hashTableList, f, dynamicString, tokenStack);
     }
 
+    printf("Здуся\n%s\n\n",funcDefNode->nodeData.stringData);
     // get next token, should be :
     token = getToken(f, dynamicString, tokenStack);
     if(token->type == TOKEN_COLON) // process list of return datatypes
@@ -1135,6 +1151,7 @@ void processFunctionDefinition(ast_node *ast, htab_list_t *hashTableList, FILE *
     // set funcDef node as a child of program root
     make_new_child(ast, funcDefNode);
 
+
 }
 
 // <prog> --> require "ifj21" <functions> EOF
@@ -1146,12 +1163,14 @@ void processProgramTemplate(ast_node *ast, htab_list_t *hashTableList, FILE *f, 
     {
         // ERROR
         printf("ERROR not a require token\n");
+        errorExit(BAD_SYNTAX_ERR, token->line);
     }
     token = getToken(f, dynamicString, tokenStack);
     if(token->type != TOKEN_STR || strcmp(token->data.tokenStringVal, "ifj21") !=0)
     {
         // ERROR
         printf("ERROR not a \"ifj21\" token\n");
+        errorExit(BAD_SYNTAX_ERR, token->line);
     }
     // prolog part is OK!
     // check functions block
@@ -1189,16 +1208,26 @@ ast_node *parseAST(htab_t *symTable, FILE *f)
 {
     //insertBuiltIn(symTable);
     StackTokens tokenStack;
+    printf("1\n");
     initStackTokens(&tokenStack);
+    printf("2\n");
     DynamicString dynamicString;
+    printf("3\n");
     DynamicStringInit(&dynamicString);
+    printf("4\n");
     htab_list_t *hashTableList = initList();
+    printf("5\n");
     htab_list_item_t *newItem = createItem(symTable);
+    printf("6\n");
     insertFirst(hashTableList, newItem);
+    printf("7\n");
     ast_node *ast = make_new_node();
+    printf("8\n");
     ast->nodeType = NODE_PROG;
-   // processProgramTemplate(ast, hashTableList, f, &dynamicString, &tokenStack);
-    testScope(hashTableList);
+    printf("9\n");
+    processProgramTemplate(ast, hashTableList, f, &dynamicString, &tokenStack);
+    printf("10\n");
+    //testScope(hashTableList);
 
     return ast;
 }

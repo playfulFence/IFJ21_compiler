@@ -77,7 +77,7 @@ void DynamicStringReverse(DynamicString *originalString, DynamicString *reversed
 
 char *DynamicStringToString(DynamicString *dynamicString)
 {
-    int size = dynamicString->size;
+    int size = dynamicString->size + 1;
     int i = 0;
     char *string = malloc(size*sizeof(char)); // +1 не точно!!!
 
@@ -88,6 +88,7 @@ char *DynamicStringToString(DynamicString *dynamicString)
         ephemera = ephemera->nextSymbol;
         i++;
     }
+    string[i] = '\0';
     DynamicStringDispose(dynamicString);
     return string;
 }

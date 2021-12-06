@@ -15,6 +15,7 @@ void testScanner(FILE *f)
     DynamicStringInit(&dynamicString);
     StackTokens tokenStack;
     initStackTokens(&tokenStack);
+    DynamicStringDispose(&dynamicString);
     token_t *token = getToken(f, &dynamicString, &tokenStack);
     while (token->type != TOKEN_EOF)
     {
@@ -34,6 +35,7 @@ void testScanner(FILE *f)
         {
             printf("[[TYPE: %10s || NONE                ]]\n", tokens[token->type]);
         }
+        DynamicStringDispose(&dynamicString);   
         token = getToken(f, &dynamicString, &tokenStack);
     }
     ungetToken(token, &tokenStack);
@@ -48,12 +50,12 @@ int main(int argc, char** argv)
     // make hash table
     htab_t * symtable = htab_init(43969);
     // open file to read program
-    FILE* prog = openFile(argc, argv);
-    //testScanner(prog);
+     FILE* prog = openFile(argc, argv);
+    testScanner(prog);
      // call parser to make abastract syntax tree
-    ast_node *ast = parseAST(symtable, prog);
-    printAST(ast);
-    printf("GDFSDFSFDSfg\n");
+    // ast_node *ast = parseAST(symtable, prog);
+    // printAST(ast);
+    //printf("GDFSDFSFDSfg\n");
     
     
     // ast_node *ast = make_new_node();
@@ -63,11 +65,12 @@ int main(int argc, char** argv)
     // make_new_child(ast, child2);
     // ast_node *child3 = make_new_node();
     // make_new_child(child1, child3);
-    // ast_node *child4 = make_new_node();
-    // make_new_child(ast, child4);
-    // ast_node *child5 = make_new_node();
-    // make_new_child(child3, child5);
-    // freeChildrenNodes(child3);
+    // // ast_node *child4 = make_new_node();
+    // // make_new_child(ast, child4);
+    // // ast_node *child5 = make_new_node();
+    // // make_new_child(child3, child5);
+    // //freeChildrenNodes(child3);
+    // printf("Проiбався\n");
     // printAST(ast);
     
     fclose(prog);
