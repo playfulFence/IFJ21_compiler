@@ -681,9 +681,28 @@ void processVariableDefStatement(ast_node *varDefNode, htab_list_t* hashTableLis
     {
     case 1: // expression
         ungetToken(token, tokenStack);
-        valueNode = bottomUpAnalysis(hashTableList, f, dynamicString, tokenStack);
-        variableNode->nodeData = valueNode->nodeData; // ПРОЕБАЛСЯ НУМБЕР
-        printf("%d - type , хуй %d - number\n", valueNode->nodeType, valueNode->nodeData.intData);
+        valueNode = bottomUpAnalysis(hashTableList, f, dynamicString, tokenStack); // STOPPED HERE!!!
+        if(valueNode->nodeType == NODE_INT_ARG) 
+        {
+            variableNode->hashTableItem->varIntVal = valueNode->hashTableItem->varIntVal;
+            variableNode->hashTableItem->varNumVal = valueNode->hashTableItem->varNumVal;
+        }
+        else if(valueNode->nodeType == NODE_NUM_ARG)
+        {
+            variableNode->hashTableItem->varNumVal = valueNode->hashTableItem->varNumVal;
+        }
+        else if(valueNode->nodeType == NODE_STR_ARG)
+        {
+            variableNode->hashTableItem->varStrVal = malloc(sizeof(char) * strlen(valueNode->hashTableItem->varStrVal));
+            variableNode->hashTableItem->varStrVal = valueNode->hashTableItem->varStrVal;
+        }
+
+        // variableNode->hashTableItem->varIntVal = valueNode->hashTableItem->varIntVal;
+        // variableNode->hashTableItem->varNumVal = valueNode->hashTableItem->varNumVal ? valueNode->hashTableItem->varNumVal : valueNode->hashTableItem->varIntVal;
+        
+        // variableNode->hashTableItem->varStrVal = valueNode->hashTableItem->varStrVal;
+        variableNode->nodeType = valueNode->nodeType;
+        
         break;
     case 2: // function call 
         ungetToken(token, tokenStack);

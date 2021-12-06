@@ -200,6 +200,8 @@ void shiftElement(token_t *expressionToken, htab_list_t* hashTableList, NoneTerm
     
 }
 
+
+
 void buildTreeFromRuleSequence(ast_node *node, DynamicString *ruleSequenceString, StackTokens *stackOfVariables)
 {
     printDynamicString(ruleSequenceString);
@@ -210,20 +212,33 @@ void buildTreeFromRuleSequence(ast_node *node, DynamicString *ruleSequenceString
         switch (token->type)
         {
         case TOKEN_NUM:
-            node->nodeData.doubleData = token->data.tokenNumVal;
+            node->hashTableItem = malloc(sizeof(htab_data_t));
+            node->hashTableItem->varNumVal = token->data.tokenNumVal;
+            node->hashTableItem->varStrVal = NULL;
+            node->hashTableItem->declareFlag = true; 
+            node->hashTableItem->defineFlag = true;
             node->nodeType = NODE_NUM_ARG;
             break;
         case TOKEN_INT:
-            node->nodeData.intData = token->data.tokenIntVal; 
-            node->nodeData.nilFlag = false;   // HERE!!!!!
+            node->hashTableItem = malloc(sizeof(htab_data_t));
+            node->hashTableItem->varIntVal = token->data.tokenIntVal; 
+            node->hashTableItem->varNumVal = (double)token->data.tokenIntVal;
+            node->hashTableItem->varStrVal = NULL;
+            node->hashTableItem->declareFlag = true;
+            node->hashTableItem->defineFlag = true;
+            //node->hashTableItem->key = token->data.tokenStringVal;
             node->nodeType = NODE_INT_ARG;
             break;
         case TOKEN_STR:
             //strcpy(node->nodeData.stringData, token->data.tokenStringVal);
             printf("aaaaaaaa: %s\n", token->data.tokenStringVal);
-            node->nodeData.stringData = token->data.tokenStringVal;
+            node->hashTableItem = malloc(sizeof(htab_data_t)); // HERE MAYBE ALLOCATE MEM FOR STRING!!!
+            node->hashTableItem->varStrVal = malloc(sizeof(char) * strlen(token->data.tokenStringVal));
+            node->hashTableItem->varStrVal = token->data.tokenStringVal;
+            printf("aaaaaaaa: %s\n", node->hashTableItem->varStrVal);
+            node->hashTableItem->declareFlag = true;
+            node->hashTableItem->defineFlag = true;
             node->nodeType = NODE_STR_ARG;
-            printf("aaaaaaaa: %s\n", node->nodeData.stringData);
             break;
         default:
             break;
@@ -687,14 +702,13 @@ ast_node *bottomUpAnalysis(htab_list_t* hashTableList, FILE *f, DynamicString *d
     // printf("%d\n", popTokenStackTokens(&stackOfVariables)->data.tokenIntVal);
     //printf("%d\n", popTokenStackTokens(&stackOfVariables)->data.tokenIntVal);
     ast_node *expressionTree = make_new_node();
-    expressionTree->nodeData.nilFlag = false;
     buildTreeFromRuleSequence(expressionTree, &reversedRuleSequenceString, &stackOfVariables);
     printAST(expressionTree);
     simplifyTheTree(expressionTree);
 
     
     
-    if(expressionTree->nodeData.nilFlag)
+    if(expressionTree->hashTableItem->declareFlag && !expressionTree->hashTableItem->defineFlag)
     {
         expressionTree->nodeType = NODE_NIL_ARG;
     }

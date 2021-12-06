@@ -248,6 +248,7 @@ token_t *getToken(FILE *f, DynamicString *dynamicString, StackTokens *tokenStack
                     // create int token 
                     newToken->type = TOKEN_INT;
                     newToken->data.tokenIntVal = DynamicStringToInt(dynamicString);
+                
                     completeToken = 1;
                 }
                 break;

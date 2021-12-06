@@ -37,19 +37,27 @@ void print_nodes(ast_node *ast, int indent)
     }
     if(ast->nodeType == NODE_ID || ast->nodeType == NODE_NIL_ARG)
     {
-        if(ast->nodeData.intData != 0)
+        if(ast->hashTableItem->varIntVal != 0)
         {
-            printf("%s(%d)\n", nodes[ast->nodeType], ast->nodeData.intData);
+            printf("%s(%d)\n", nodes[ast->nodeType], ast->hashTableItem->varIntVal);
         }
-        else if(ast->nodeData.doubleData != 0)
+        else if(ast->hashTableItem->varIntVal != 0)
         {
-            printf("%s(%f)\n", nodes[ast->nodeType], ast->nodeData.doubleData);
+            printf("%s(%f)\n", nodes[ast->nodeType], ast->hashTableItem->varNumVal);
         }
         else if(ast->nodeData.stringData != NULL)
         {
             char *ch = ast->nodeData.stringData;
             printf("%s(%s)\n", nodes[ast->nodeType], ch);
         }
+    }
+    else if(ast->nodeType == NODE_INT_ARG || ast->nodeType == NODE_NUM_ARG)
+    {
+        printf("%s(%.2f)\n", nodes[ast->nodeType], ast->hashTableItem->varNumVal);
+    }
+    else if(ast->nodeType == NODE_STR_ARG)
+    {
+        printf("%s(%s)\n", nodes[ast->nodeType], ast->hashTableItem->varStrVal);
     }
     else
     {
