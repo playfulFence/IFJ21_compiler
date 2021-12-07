@@ -56,6 +56,7 @@ NoneTerminal transformTokenToNoneTerminal(tokenType_t type)
         case TOKEN_INT:
         case TOKEN_NUM:
         case TOKEN_STR:
+        case TOKEN_NIL:
             element = NONE_TERMINAL_ID;
             break;
         default:
@@ -161,7 +162,7 @@ void reduceByTheRule(NoneTerminal *topNoneTerminal, NoneTerminalStack *stackOfNo
 void shiftElement(token_t *expressionToken, NoneTerminal nextNoneTerminal, StackTokens *stackOfVaruables, NoneTerminalStack *stackOfNoneTerminals, htab_list_t *hashTableList)
 {
     pushNoneTerminalElement(stackOfNoneTerminals, nextNoneTerminal);
-    if(expressionToken->type == TOKEN_STR || expressionToken->type == TOKEN_INT || expressionToken->type == TOKEN_NUM || expressionToken->type == TOKEN_ID)
+    if(expressionToken->type == TOKEN_STR || expressionToken->type == TOKEN_INT || expressionToken->type == TOKEN_NUM || expressionToken->type == TOKEN_ID || expressionToken->type == TOKEN_NIL)
     {
         if(expressionToken->type == TOKEN_ID)
         {
@@ -182,8 +183,16 @@ void shiftElement(token_t *expressionToken, NoneTerminal nextNoneTerminal, Stack
                 {
                     if(listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_FIRST)->defineFlag == 0) // check if variable is defined
                     {
-                        printf("VARIABLE IS UNDEFINED\n");
-                        exit(11);
+                        if(listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_FIRST)->declareFlag == 0)
+                        {
+                            printf("VARIABLE IS UNDEFINED\n");
+                            exit(11);
+                        }
+                        else
+                        {
+                            expressionToken->type = TOKEN_NIL;
+                            expressionToken->data.nilFlag = 0;
+                        }
                     }
                     else // OK, it's variable 
                     {
@@ -232,6 +241,9 @@ void buildTreeFromRuleSequence(ast_node *node, DynamicString *ruleSequenceString
             node->nodeType = NODE_STR_ARG;
             node->nodeData.stringData = token->data.tokenStringVal;
             break;
+        case TOKEN_NIL: 
+            node->nodeType = NODE_NIL;
+            node->nodeData.nilFlag = 0;
         default:
             break;
         }
@@ -248,7 +260,7 @@ void buildTreeFromRuleSequence(ast_node *node, DynamicString *ruleSequenceString
     }
     else
     {
-        if(ruleSequenceString->firstSymbol->symbol == 'E')
+        while(ruleSequenceString->firstSymbol->symbol == 'E')
         {
             ruleSequenceString->firstSymbol = ruleSequenceString->firstSymbol->nextSymbol;    
         }
@@ -312,51 +324,92 @@ void expressionSemCheck(ast_node *leftOperand, ast_node *rightOperand, treeNodeT
         if(leftOperand->nodeType != NODE_STR_ARG)
         {
             printf("ERROR: strlen, should be string argument");
-            exit(11);
+            errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 123);
         }
         break;
     case NODE_PLUS:
     case NODE_MINUS:
     case NODE_MULT:
     case NODE_DIV:
-        if (leftOperand->nodeType == NODE_STR_ARG || rightOperand->nodeType == NODE_STR_ARG)
+        if(leftOperand->nodeType == NODE_NIL || rightOperand->nodeType == NODE_NIL)
+        {
+            // TODO check error type 
+            if(leftOperand->nodeData.nilFlag == 0)
+            {
+                errorExit(SEMANTIC_UNDEF_REDEF_ERR, 123);
+            }
+            else
+            {
+                errorExit(UNEXPECTED_NIL_ERR, 123);
+            }
+            
+        }
+        if (leftOperand->nodeType == NODE_STR_ARG || rightOperand->nodeType == NODE_STR_ARG || leftOperand->nodeType == NODE_NIL || rightOperand->nodeType == NODE_NIL)
         {
             printf("ERROR: +|-|/|*, has string as operand");
-            exit(11);
+            errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 123);
+        }
+        if(operatorType == NODE_DIV)
+        {
+            if((rightOperand->nodeData.intData == 0 && rightOperand->nodeData.doubleData != 0) ||
+               (rightOperand->nodeData.intData != 0 && rightOperand->nodeData.doubleData == 0) || 
+               (rightOperand->nodeData.intData == 0 && rightOperand->nodeData.doubleData == 0))
+            {
+                errorExit(ZERO_DIV_ERR, 123);
+            }
         }
         break;
     case NODE_INTDIV:
-        if (leftOperand->nodeType != NODE_INT_ARG || rightOperand->nodeType == NODE_INT_ARG)
+        if (leftOperand->nodeType != NODE_INT_ARG || rightOperand->nodeType != NODE_INT_ARG)
         {
             printf("ERROR: //, should have two integer operands");
-            exit(11);
+            errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 123);
+        }
+        if((rightOperand->nodeData.intData == 0 && rightOperand->nodeData.doubleData != 0) ||
+            (rightOperand->nodeData.intData != 0 && rightOperand->nodeData.doubleData == 0) || 
+            (rightOperand->nodeData.intData == 0 && rightOperand->nodeData.doubleData == 0))
+        {
+            errorExit(ZERO_DIV_ERR, 123);
         }
         break;
     case NODE_CONC:
         if (leftOperand->nodeType != NODE_STR_ARG || rightOperand->nodeType != NODE_STR_ARG)
         {
             printf("ERROR: cancatenation, should has two string operands");
-            exit(11);
+            errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 123);
         }
         break;
     case NODE_LESS:
     case NODE_LEQ:
     case NODE_GREATER:
     case NODE_GEQ:
-        if(leftOperand->nodeType == NODE_STR_ARG && rightOperand->nodeType != NODE_STR_ARG)
+        if((leftOperand->nodeType == NODE_STR_ARG && rightOperand->nodeType != NODE_STR_ARG) || (leftOperand->nodeType != NODE_STR_ARG && rightOperand->nodeType == NODE_STR_ARG))
         {
             printf("ERROR: <|<=|>|>=, if one operand is string second must be string too");
-            exit(11);
+            errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 123);
         }
-        if(((leftOperand->nodeType == NODE_INT_ARG || leftOperand->nodeType == NODE_NUM_ARG) && (rightOperand->nodeType != NODE_INT_ARG)) || ((leftOperand->nodeType == NODE_INT_ARG || leftOperand->nodeType == NODE_NUM_ARG) && (leftOperand->nodeType != NODE_NUM_ARG)))
+        if((leftOperand->nodeType == NODE_INT_ARG && rightOperand->nodeType == NODE_STR_ARG) || (leftOperand->nodeType == NODE_NUM_ARG && rightOperand->nodeType == NODE_STR_ARG))
         {
             printf("ERROR: <|<=|>|>=, if one operand is int/num second must be int/num too");
-            exit(11);
+            errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 123);
         }
         break;
     case NODE_EQUAL:
     case NODE_NEQ:
-        // TODO think about NIL and equal 
+        // TODO: check one more time
+        if(!(leftOperand->nodeType == NODE_NIL || rightOperand->nodeType == NODE_NIL))
+        {
+            if((leftOperand->nodeType == NODE_STR_ARG && rightOperand->nodeType != NODE_STR_ARG) || (leftOperand->nodeType != NODE_STR_ARG && rightOperand->nodeType == NODE_STR_ARG))
+            {
+                printf("ERROR: <|<=|>|>=, if one operand is string second must be string too");
+                errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 123);
+            }
+            else if((leftOperand->nodeType == NODE_INT_ARG && rightOperand->nodeType == NODE_STR_ARG) || (leftOperand->nodeType == NODE_NUM_ARG && rightOperand->nodeType == NODE_STR_ARG))
+            {
+                printf("ERROR: <|<=|>|>=, if one operand is int/num second must be int/num too");
+                errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 123);
+            }
+        }
         break;
     default:
         break;
@@ -484,13 +537,14 @@ void processNode(ast_node *node)
             else
             {
                 node->nodeData.intData = node->childrenNodes[0]->nodeData.intData / node->childrenNodes[1]->nodeData.intData;
-                node->nodeType = NODE_INT_ARG;
+                node->nodeType = NODE_NUM_ARG;
             }
         }
         break;
     case NODE_INTDIV:
         expressionSemCheck(node->childrenNodes[0], node->childrenNodes[1], NODE_INTDIV);
         node->nodeData.intData = node->childrenNodes[0]->nodeData.intData / node->childrenNodes[1]->nodeData.intData;
+        node->nodeType = NODE_INT_ARG;
         break;
     case NODE_CONC:
         expressionSemCheck(node->childrenNodes[0], node->childrenNodes[1], NODE_CONC);
@@ -499,21 +553,417 @@ void processNode(ast_node *node)
         break;
     case NODE_LESS:
         expressionSemCheck(node->childrenNodes[0], node->childrenNodes[1], NODE_LESS);
+        if((node->childrenNodes[0]->nodeType == NODE_INT_ARG || node->childrenNodes[0]->nodeType == NODE_NUM_ARG) && (node->childrenNodes[1]->nodeType == NODE_INT_ARG || node->childrenNodes[1]->nodeType == NODE_NUM_ARG))
+        {
+            if(node->childrenNodes[0]->nodeType == NODE_NUM_ARG)
+            {
+                if(node->childrenNodes[1]->nodeType == NODE_NUM_ARG)
+                {
+                    if(node->childrenNodes[0]->nodeData.doubleData < node->childrenNodes[1]->nodeData.doubleData)
+                    {
+                        node->nodeType = NODE_TRUE;
+                    }
+                    else
+                    {
+                        node->nodeType = NODE_NIL;
+                    }
+                }
+                else
+                {
+                    if(node->childrenNodes[0]->nodeData.doubleData < node->childrenNodes[1]->nodeData.intData)
+                    {
+                        node->nodeType = NODE_TRUE;
+                    }
+                    else
+                    {
+                        node->nodeType = NODE_NIL;
+                    }
+                }
+            }
+            else
+            {
+                if(node->childrenNodes[1]->nodeType == NODE_NUM_ARG)
+                {
+                    if(node->childrenNodes[0]->nodeData.intData < node->childrenNodes[1]->nodeData.doubleData)
+                    {
+                        node->nodeType = NODE_TRUE;
+                    }
+                    else
+                    {
+                        node->nodeType = NODE_NIL;
+                    }
+                }
+                else
+                {
+                    if(node->childrenNodes[0]->nodeData.intData < node->childrenNodes[1]->nodeData.intData)
+                    {
+                        node->nodeType = NODE_TRUE;
+                    }
+                    else
+                    {
+                        node->nodeType = NODE_NIL;
+                    }
+                }
+            }
+        }
+        if((node->childrenNodes[0]->nodeType == NODE_STR_ARG) && (node->childrenNodes[1]->nodeType == NODE_STR_ARG))
+        {
+            // TODO 
+        }
         break;
     case NODE_LEQ:
         expressionSemCheck(node->childrenNodes[0], node->childrenNodes[1], NODE_LEQ);
+        if((node->childrenNodes[0]->nodeType == NODE_INT_ARG || node->childrenNodes[0]->nodeType == NODE_NUM_ARG) && (node->childrenNodes[1]->nodeType == NODE_INT_ARG || node->childrenNodes[1]->nodeType == NODE_NUM_ARG))
+        {
+            if(node->childrenNodes[0]->nodeType == NODE_NUM_ARG)
+            {
+                if(node->childrenNodes[1]->nodeType == NODE_NUM_ARG)
+                {
+                    if(node->childrenNodes[0]->nodeData.doubleData <= node->childrenNodes[1]->nodeData.doubleData)
+                    {
+                        node->nodeType = NODE_TRUE;
+                    }
+                    else
+                    {
+                        node->nodeType = NODE_NIL;
+                    }
+                }
+                else
+                {
+                    if(node->childrenNodes[0]->nodeData.doubleData <= node->childrenNodes[1]->nodeData.intData)
+                    {
+                        node->nodeType = NODE_TRUE;
+                    }
+                    else
+                    {
+                        node->nodeType = NODE_NIL;
+                    }
+                }
+            }
+            else
+            {
+                if(node->childrenNodes[1]->nodeType == NODE_NUM_ARG)
+                {
+                    if(node->childrenNodes[0]->nodeData.intData <= node->childrenNodes[1]->nodeData.doubleData)
+                    {
+                        node->nodeType = NODE_TRUE;
+                    }
+                    else
+                    {
+                        node->nodeType = NODE_NIL;
+                    }
+                }
+                else
+                {
+                    if(node->childrenNodes[0]->nodeData.intData <= node->childrenNodes[1]->nodeData.intData)
+                    {
+                        node->nodeType = NODE_TRUE;
+                    }
+                    else
+                    {
+                        node->nodeType = NODE_NIL;
+                    }
+                }
+            }
+        }
+        if((node->childrenNodes[0]->nodeType == NODE_STR_ARG) && (node->childrenNodes[1]->nodeType == NODE_STR_ARG))
+        {
+            // TODO 
+        }
         break;
     case NODE_GREATER:
         expressionSemCheck(node->childrenNodes[0], node->childrenNodes[1], NODE_GREATER);
+        if((node->childrenNodes[0]->nodeType == NODE_INT_ARG || node->childrenNodes[0]->nodeType == NODE_NUM_ARG) && (node->childrenNodes[1]->nodeType == NODE_INT_ARG || node->childrenNodes[1]->nodeType == NODE_NUM_ARG))
+        {
+            if(node->childrenNodes[0]->nodeType == NODE_NUM_ARG)
+            {
+                if(node->childrenNodes[1]->nodeType == NODE_NUM_ARG)
+                {
+                    if(node->childrenNodes[0]->nodeData.doubleData > node->childrenNodes[1]->nodeData.doubleData)
+                    {
+                        node->nodeType = NODE_TRUE;
+                    }
+                    else
+                    {
+                        node->nodeType = NODE_NIL;
+                    }
+                }
+                else
+                {
+                    if(node->childrenNodes[0]->nodeData.doubleData > node->childrenNodes[1]->nodeData.intData)
+                    {
+                        node->nodeType = NODE_TRUE;
+                    }
+                    else
+                    {
+                        node->nodeType = NODE_NIL;
+                    }
+                }
+            }
+            else
+            {
+                if(node->childrenNodes[1]->nodeType == NODE_NUM_ARG)
+                {
+                    if(node->childrenNodes[0]->nodeData.intData > node->childrenNodes[1]->nodeData.doubleData)
+                    {
+                        node->nodeType = NODE_TRUE;
+                    }
+                    else
+                    {
+                        node->nodeType = NODE_NIL;
+                    }
+                }
+                else
+                {
+                    if(node->childrenNodes[0]->nodeData.intData > node->childrenNodes[1]->nodeData.intData)
+                    {
+                        node->nodeType = NODE_TRUE;
+                    }
+                    else
+                    {
+                        node->nodeType = NODE_NIL;
+                    }
+                }
+            }
+        }
+        if((node->childrenNodes[0]->nodeType == NODE_STR_ARG) && (node->childrenNodes[1]->nodeType == NODE_STR_ARG))
+        {
+            // TODO 
+        }
         break;
     case NODE_GEQ:
         expressionSemCheck(node->childrenNodes[0], node->childrenNodes[1], NODE_GEQ);
+        if((node->childrenNodes[0]->nodeType == NODE_INT_ARG || node->childrenNodes[0]->nodeType == NODE_NUM_ARG) && (node->childrenNodes[1]->nodeType == NODE_INT_ARG || node->childrenNodes[1]->nodeType == NODE_NUM_ARG))
+        {
+            if(node->childrenNodes[0]->nodeType == NODE_NUM_ARG)
+            {
+                if(node->childrenNodes[1]->nodeType == NODE_NUM_ARG)
+                {
+                    if(node->childrenNodes[0]->nodeData.doubleData >= node->childrenNodes[1]->nodeData.doubleData)
+                    {
+                        node->nodeType = NODE_TRUE;
+                    }
+                    else
+                    {
+                        node->nodeType = NODE_NIL;
+                    }
+                }
+                else
+                {
+                    if(node->childrenNodes[0]->nodeData.doubleData >= node->childrenNodes[1]->nodeData.intData)
+                    {
+                        node->nodeType = NODE_TRUE;
+                    }
+                    else
+                    {
+                        node->nodeType = NODE_NIL;
+                    }
+                }
+            }
+            else
+            {
+                if(node->childrenNodes[1]->nodeType == NODE_NUM_ARG)
+                {
+                    if(node->childrenNodes[0]->nodeData.intData >= node->childrenNodes[1]->nodeData.doubleData)
+                    {
+                        node->nodeType = NODE_TRUE;
+                    }
+                    else
+                    {
+                        node->nodeType = NODE_NIL;
+                    }
+                }
+                else
+                {
+                    if(node->childrenNodes[0]->nodeData.intData >= node->childrenNodes[1]->nodeData.intData)
+                    {
+                        node->nodeType = NODE_TRUE;
+                    }
+                    else
+                    {
+                        node->nodeType = NODE_NIL;
+                    }
+                }
+            }
+        }
+        if((node->childrenNodes[0]->nodeType == NODE_STR_ARG) && (node->childrenNodes[1]->nodeType == NODE_STR_ARG))
+        {
+            // TODO 
+        }
         break;
     case NODE_NEQ:
         expressionSemCheck(node->childrenNodes[0], node->childrenNodes[1], NODE_NEQ);
+        if(node->childrenNodes[0]->nodeType == NODE_NIL)
+        {
+            if(node->childrenNodes[0]->nodeType != node->childrenNodes[1]->nodeType)
+            {
+                node->nodeType = NODE_TRUE;
+            }
+            else
+            {
+                node->nodeType = NODE_NIL;
+            }
+        }
+        else if(node->childrenNodes[1]->nodeType == NODE_NIL)
+        {
+            if(node->childrenNodes[0]->nodeType != node->childrenNodes[1]->nodeType)
+            {
+                node->nodeType = NODE_TRUE;
+            }
+            else
+            {
+                node->nodeType = NODE_NIL;
+            }
+        }
+        else if(node->childrenNodes[0]->nodeType == NODE_NUM_ARG)
+        {
+            if(node->childrenNodes[1]->nodeType == NODE_NUM_ARG)
+            {
+                if(node->childrenNodes[0]->nodeData.doubleData != node->childrenNodes[1]->nodeData.doubleData)
+                {
+                    node->nodeType = NODE_TRUE;
+                }
+                else
+                {
+                    node->nodeType = NODE_NIL;
+                }
+            }
+            else
+            {
+                if(node->childrenNodes[0]->nodeData.doubleData != node->childrenNodes[1]->nodeData.intData)
+                {
+                    node->nodeType = NODE_TRUE;
+                }
+                else
+                {
+                    node->nodeType = NODE_NIL;
+                }
+            }
+        }
+        else if (node->childrenNodes[0]->nodeType == NODE_INT_ARG)
+        {
+            if(node->childrenNodes[1]->nodeType == NODE_NUM_ARG)
+            {
+                if(node->childrenNodes[0]->nodeData.intData != node->childrenNodes[1]->nodeData.doubleData)
+                {
+                    node->nodeType = NODE_TRUE;
+                }
+                else
+                {
+                    node->nodeType = NODE_NIL;
+                }
+            }
+            else
+            {
+                if(node->childrenNodes[0]->nodeData.intData != node->childrenNodes[1]->nodeData.intData)
+                {
+                    node->nodeType = NODE_TRUE;
+                }
+                else
+                {
+                    node->nodeType = NODE_NIL;
+                }
+            }
+        }
+        else if(node->childrenNodes[0]->nodeType == NODE_STR_ARG)
+        {
+        
+            if(strcmp(node->childrenNodes[0]->nodeData.stringData, node->childrenNodes[1]->nodeData.stringData) != 0)
+            {
+                node->nodeType = NODE_TRUE;
+            }
+            else
+            {
+                node->nodeType = NODE_NIL;
+            }
+        }
         break;
     case NODE_EQUAL:
         expressionSemCheck(node->childrenNodes[0], node->childrenNodes[1], NODE_EQUAL);
+        if(node->childrenNodes[0]->nodeType == NODE_NIL)
+        {
+            if(node->childrenNodes[0]->nodeType == node->childrenNodes[1]->nodeType)
+            {
+                node->nodeType = NODE_TRUE;
+            }
+            else
+            {
+                node->nodeType = NODE_NIL;
+            }
+        }
+        else if(node->childrenNodes[1]->nodeType == NODE_NIL)
+        {
+            if(node->childrenNodes[0]->nodeType == node->childrenNodes[1]->nodeType)
+            {
+                node->nodeType = NODE_TRUE;
+            }
+            else
+            {
+                node->nodeType = NODE_NIL;
+            }
+        }
+        else if(node->childrenNodes[0]->nodeType == NODE_NUM_ARG)
+        {
+            if(node->childrenNodes[1]->nodeType == NODE_NUM_ARG)
+            {
+                if(node->childrenNodes[0]->nodeData.doubleData == node->childrenNodes[1]->nodeData.doubleData)
+                {
+                    node->nodeType = NODE_TRUE;
+                }
+                else
+                {
+                    node->nodeType = NODE_NIL;
+                }
+            }
+            else
+            {
+                if(node->childrenNodes[0]->nodeData.doubleData == node->childrenNodes[1]->nodeData.intData)
+                {
+                    node->nodeType = NODE_TRUE;
+                }
+                else
+                {
+                    node->nodeType = NODE_NIL;
+                }
+            }
+        }
+        else if (node->childrenNodes[0]->nodeType == NODE_INT_ARG)
+        {
+            if(node->childrenNodes[1]->nodeType == NODE_NUM_ARG)
+            {
+                if(node->childrenNodes[0]->nodeData.intData == node->childrenNodes[1]->nodeData.doubleData)
+                {
+                    node->nodeType = NODE_TRUE;
+                }
+                else
+                {
+                    node->nodeType = NODE_NIL;
+                }
+            }
+            else
+            {
+                if(node->childrenNodes[0]->nodeData.intData == node->childrenNodes[1]->nodeData.intData)
+                {
+                    node->nodeType = NODE_TRUE;
+                }
+                else
+                {
+                    node->nodeType = NODE_NIL;
+                }
+            }
+        }
+        else if(node->childrenNodes[0]->nodeType == NODE_STR_ARG)
+        {
+        
+            if(strcmp(node->childrenNodes[0]->nodeData.stringData, node->childrenNodes[1]->nodeData.stringData) == 0)
+            {
+                node->nodeType = NODE_TRUE;
+            }
+            else
+            {
+                node->nodeType = NODE_NIL;
+            }
+        }
         break;
     default:
         break;
@@ -523,13 +973,12 @@ void processNode(ast_node *node)
 
 void simplifyTheTree(ast_node *node)
 {
-    if(node->nodeType == NODE_INT_ARG || node->nodeType == NODE_NUM_ARG || node->nodeType == NODE_STR_ARG)
+    if(node->nodeType == NODE_INT_ARG || node->nodeType == NODE_NUM_ARG || node->nodeType == NODE_STR_ARG || node->nodeType == NODE_NIL)
     {
         return;
     }
     else if(node->nodeType == NODE_STRLEN)
     {
-        printf("test\n");
         simplifyTheTree(node->childrenNodes[0]);
         processNode(node);
     }
@@ -607,19 +1056,21 @@ ast_node *bottomUpAnalysis(htab_list_t* hashTableList, FILE *f, DynamicString *d
         expressionToken = getToken(f, dynamicString, tokenStack);
         nextNoneTerminal = transformTokenToNoneTerminal(expressionToken->type);
     }
-    
+    printf("Rule sequence is ready\n");
     // reversed rule sequence string 
     DynamicString reversedRuleSequenceString;
     DynamicStringInit(&reversedRuleSequenceString);
     DynamicStringReverse(&ruleSequenceString, &reversedRuleSequenceString);
     //printDynamicString(&ruleSequenceString);
     DynamicStringDispose(&ruleSequenceString);
-    //printDynamicString(&reversedRuleSequenceString);
+    printDynamicString(&reversedRuleSequenceString);
     ast_node *expressionTree = make_new_node();
+    printf("Be ready to build a tree\n");
     buildTreeFromRuleSequence(expressionTree, &reversedRuleSequenceString, &stackOfVariables);
-    //printAST(expressionTree);
+    printf("TRee is built\n");
+    printAST(expressionTree);
     simplifyTheTree(expressionTree);
-    //printAST(expressionTree);
+    printAST(expressionTree);
     return expressionTree;
 }
 

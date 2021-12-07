@@ -6,6 +6,7 @@
 #include "stack_p_t_elements.h"
 #include "dynamic_string.h"
 #include "tree.h"
+#include "error.h"
 
 
 // precedence table for bottom-up analysis 
