@@ -121,6 +121,7 @@ void processReturnStatement(ast_node *returnNode, ast_node* funcDefNode, htab_li
     token_t *token = getToken(f, dynamicString, tokenStack);
     int returnCounter = 0;
     ast_node *expressionNode;
+    token_t *nextToken;
     if(detectExpressionOrFunctionCall(token->type, f, dynamicString, tokenStack) == 1)
     {
         ungetToken(token, tokenStack);
@@ -132,7 +133,7 @@ void processReturnStatement(ast_node *returnNode, ast_node* funcDefNode, htab_li
                 errorExit(SEMANTIC_PARAM_COUNT_ERR, token->line);                   // must return int, num, string
             }
 
-            expressionNode = bottomUpAnalysis(hashTableList, f, dynamicString, tokenStack); // TODO
+            expressionNode = bottomUpAnalysis(hashTableList, f, dynamicString, tokenStack, 1); // TODO
 
 
             if(expressionNode->nodeType == NODE_STR_ARG && funcDefNode->hashTableItem->funcReturns[returnCounter]->datatype != DATATYPE_STRING)
@@ -160,10 +161,10 @@ void processReturnStatement(ast_node *returnNode, ast_node* funcDefNode, htab_li
             returnCounter++;
             if(token->type == TOKEN_COMMA)
             {
-                token = getToken(f, dynamicString, tokenStack);
-                if(detectExpressionOrFunctionCall(token->type, f, dynamicString, tokenStack) == 1)
+                nextToken = getToken(f, dynamicString, tokenStack);
+                if(detectExpressionOrFunctionCall(nextToken->type, f, dynamicString, tokenStack) == 1)
                 {
-                    ungetToken(token, tokenStack);
+                    ungetToken(nextToken, tokenStack);
                 }
                 else
                 {
@@ -191,9 +192,12 @@ void processReturnStatement(ast_node *returnNode, ast_node* funcDefNode, htab_li
 // <statement> --> while expression do <list_of_statements> end
 void processWhileStatement(ast_node *whileNode, htab_list_t* hashTableList, FILE *f, DynamicString *dynamicString, StackTokens *tokenStack)
 {
-    ast_node *whileConditionNode = bottomUpAnalysis(hashTableList, f, dynamicString, tokenStack);
+    ast_node *whileConditionNode = make_new_node();
+     
     whileConditionNode->nodeType = NODE_WHILE_CONDITION;
     make_new_child(whileNode, whileConditionNode);
+    ast_node *conditionNode = bottomUpAnalysis(hashTableList, f, dynamicString, tokenStack, 1);
+    make_new_child(whileConditionNode, conditionNode);
     token_t *token = getToken(f, dynamicString, tokenStack);
     if(token->type != TOKEN_DO)
     {
@@ -226,7 +230,7 @@ void processIfStatement(ast_node *ifNode, htab_list_t* hashTableList, FILE *f, D
     ast_node *ifConditionNode = make_new_node();
     ifConditionNode->nodeType = NODE_IF_CONDITION;
     make_new_child(ifNode, ifConditionNode);
-    ast_node *conditionNode = bottomUpAnalysis(hashTableList, f, dynamicString, tokenStack);
+    ast_node *conditionNode = bottomUpAnalysis(hashTableList, f, dynamicString, tokenStack, 1);
     make_new_child(ifConditionNode, conditionNode);
     
     token_t *token = getToken(f, dynamicString, tokenStack);
@@ -466,7 +470,7 @@ void processSingleAssignment(ast_node *singleAssignNode, htab_list_t* hashTableL
         ungetToken(token, tokenStack);
         do
         {
-            expressionNode = bottomUpAnalysis(hashTableList, f, dynamicString, tokenStack); // TODO
+            expressionNode = bottomUpAnalysis(hashTableList, f, dynamicString, tokenStack, 0); // TODO
             //make_new_child(expressionsNode, expressionNode);
             if(counterOfValues < singleAssignNode->childrenCounter)
             {
@@ -479,6 +483,8 @@ void processSingleAssignment(ast_node *singleAssignNode, htab_list_t* hashTableL
                     }
                     singleAssignNode->childrenNodes[counterOfValues]->nodeData.intData = expressionNode->nodeData.intData;
                     singleAssignNode->childrenNodes[counterOfValues]->hashTableItem->varIntVal = singleAssignNode->childrenNodes[counterOfValues]->nodeData.intData;
+                    singleAssignNode->childrenNodes[counterOfValues]->hashTableItem->defineFlag = 1;
+                    idNode->nodeType = NODE_INT_ARG;
                     break;
                 case NODE_NUM_ARG:
                     if(singleAssignNode->childrenNodes[counterOfValues]->hashTableItem->datatype != DATATYPE_NUM)
@@ -487,6 +493,8 @@ void processSingleAssignment(ast_node *singleAssignNode, htab_list_t* hashTableL
                     }
                     singleAssignNode->childrenNodes[counterOfValues]->nodeData.doubleData = expressionNode->nodeData.doubleData;
                     singleAssignNode->childrenNodes[counterOfValues]->hashTableItem->varNumVal = singleAssignNode->childrenNodes[counterOfValues]->nodeData.doubleData;
+                    singleAssignNode->childrenNodes[counterOfValues]->hashTableItem->defineFlag = 1;
+                    idNode->nodeType = NODE_NUM_ARG;
                     break;
                 case NODE_STR_ARG:
                     if(singleAssignNode->childrenNodes[counterOfValues]->hashTableItem->datatype != DATATYPE_STRING)
@@ -495,7 +503,9 @@ void processSingleAssignment(ast_node *singleAssignNode, htab_list_t* hashTableL
                     }
                     singleAssignNode->childrenNodes[counterOfValues]->nodeData.stringData = expressionNode->nodeData.stringData;
                     singleAssignNode->childrenNodes[counterOfValues]->hashTableItem->varStrVal = malloc(sizeof(char) * strlen(singleAssignNode->childrenNodes[counterOfValues]->nodeData.stringData));
+                    singleAssignNode->childrenNodes[counterOfValues]->hashTableItem->defineFlag = 1;
                     strcpy(singleAssignNode->childrenNodes[counterOfValues]->hashTableItem->varStrVal, singleAssignNode->childrenNodes[counterOfValues]->nodeData.stringData);
+                    idNode->nodeType = NODE_STR_ARG;
                     break;
                 case NODE_TRUE:
                     printf("ASSIGN WITH TRUE\n");
@@ -505,6 +515,7 @@ void processSingleAssignment(ast_node *singleAssignNode, htab_list_t* hashTableL
                     singleAssignNode->childrenNodes[counterOfValues]->hashTableItem->type = TYPE_VARIABLE;
                     singleAssignNode->childrenNodes[counterOfValues]->hashTableItem->declareFlag = true;    // means that value is NIL!!!!
                     singleAssignNode->childrenNodes[counterOfValues]->hashTableItem->defineFlag = false;        // p.s. we're so smart to make new flag
+                    idNode->nodeType = NODE_NIL;
                     return;
                 default:
                     break;
@@ -626,7 +637,7 @@ void processMultipleAssignment(ast_node *multAssignNode, htab_list_t* hashTableL
         // TODO think about func in expressions list
         do
         {
-            expressionNode = bottomUpAnalysis(hashTableList, f, dynamicString, tokenStack); // TODO
+            expressionNode = bottomUpAnalysis(hashTableList, f, dynamicString, tokenStack, 0); // TODO
 
             // TODO CHECK IF THERE ARE LESS VALUES THAN IDS
             if(counterOfValues < idsNode->childrenCounter)
@@ -640,6 +651,7 @@ void processMultipleAssignment(ast_node *multAssignNode, htab_list_t* hashTableL
                     }
                     idsNode->childrenNodes[counterOfValues]->nodeData.intData = expressionNode->nodeData.intData;
                     idsNode->childrenNodes[counterOfValues]->hashTableItem->varIntVal = idsNode->childrenNodes[counterOfValues]->nodeData.intData;
+                    idsNode->childrenNodes[counterOfValues]->hashTableItem->defineFlag = 1;
                     break;
                 case NODE_NUM_ARG:
                     if(idsNode->childrenNodes[counterOfValues]->hashTableItem->datatype != DATATYPE_NUM)
@@ -648,6 +660,7 @@ void processMultipleAssignment(ast_node *multAssignNode, htab_list_t* hashTableL
                     }
                     idsNode->childrenNodes[counterOfValues]->nodeData.doubleData = expressionNode->nodeData.doubleData;
                     idsNode->childrenNodes[counterOfValues]->hashTableItem->varNumVal = idsNode->childrenNodes[counterOfValues]->nodeData.doubleData;
+                    idsNode->childrenNodes[counterOfValues]->hashTableItem->defineFlag = 1;
                     break;
                 case NODE_STR_ARG:
                     if(idsNode->childrenNodes[counterOfValues]->hashTableItem->datatype != DATATYPE_STRING)
@@ -657,6 +670,7 @@ void processMultipleAssignment(ast_node *multAssignNode, htab_list_t* hashTableL
                     idsNode->childrenNodes[counterOfValues]->nodeData.stringData = expressionNode->nodeData.stringData;
                     idsNode->childrenNodes[counterOfValues]->hashTableItem->varStrVal = malloc(sizeof(char) * strlen(idsNode->childrenNodes[counterOfValues]->nodeData.stringData));
                     strcpy(idsNode->childrenNodes[counterOfValues]->hashTableItem->varStrVal, idsNode->childrenNodes[counterOfValues]->nodeData.stringData);
+                    idsNode->childrenNodes[counterOfValues]->hashTableItem->defineFlag = 1;
                     break;
                 case NODE_TRUE:
                     printf("ASSIGN WITH TRUE\n");
@@ -796,7 +810,7 @@ void processVariableDefStatement(ast_node *varDefNode, htab_list_t* hashTableLis
         case 1: // expression
             ungetToken(token, tokenStack);
 
-            valueNode = bottomUpAnalysis(hashTableList, f, dynamicString, tokenStack); 
+            valueNode = bottomUpAnalysis(hashTableList, f, dynamicString, tokenStack, 0); 
             variableNode->nodeType = valueNode->nodeType;
             // TODO check datatype compatibility
             switch (variableNode->nodeType)

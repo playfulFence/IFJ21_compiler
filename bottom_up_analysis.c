@@ -172,8 +172,9 @@ void reduceByTheRule(NoneTerminal *topNoneTerminal, NoneTerminalStack *stackOfNo
     }
 }
 
-void shiftElement(token_t *expressionToken, NoneTerminal nextNoneTerminal, StackTokens *stackOfVaruables, NoneTerminalStack *stackOfNoneTerminals, htab_list_t *hashTableList)
+void shiftElement(token_t *expressionToken, NoneTerminal nextNoneTerminal, StackTokens *stackOfVaruables, NoneTerminalStack *stackOfNoneTerminals, htab_list_t *hashTableList, int flag)
 {
+    printf("FLAG %d\n", flag);
     pushNoneTerminalElement(stackOfNoneTerminals, nextNoneTerminal);
     if(expressionToken->type == TOKEN_STR || expressionToken->type == TOKEN_INT || expressionToken->type == TOKEN_NUM || expressionToken->type == TOKEN_ID || expressionToken->type == TOKEN_NIL)
     {
@@ -187,6 +188,7 @@ void shiftElement(token_t *expressionToken, NoneTerminal nextNoneTerminal, Stack
             }
             else
             {
+                printf("QQQQQQQQQQQQQQQQ\n");
                 if(listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_FIRST)->type != TYPE_VARIABLE) // check if it's variable
                 {
                     printf("NOT A VARIABLE\n");
@@ -196,6 +198,7 @@ void shiftElement(token_t *expressionToken, NoneTerminal nextNoneTerminal, Stack
                 {
                     if(listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_FIRST)->defineFlag == 0) // check if variable is defined
                     {
+                        printf("RRRRRRRRRRRRRRRRRRRR\n");
                         if(listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_FIRST)->declareFlag == 0)
                         {
                             printf("VARIABLE IS UNDEFINED\n");
@@ -209,23 +212,29 @@ void shiftElement(token_t *expressionToken, NoneTerminal nextNoneTerminal, Stack
                     }
                     else // OK, it's variable 
                     {
-                        switch (listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_FIRST)->datatype)
+                        printf("RERERERERRERERERER\n");
+                        if(!flag)
                         {
-                        case DATATYPE_INT:
-                            expressionToken->type = TOKEN_INT;
-                            expressionToken->data.tokenIntVal = listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_FIRST)->varIntVal;
-                            break;
-                        case DATATYPE_NUM:
-                            expressionToken->type = TOKEN_NUM;
-                            expressionToken->data.tokenNumVal = listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_FIRST)->varNumVal;
-                            break;
-                        case DATATYPE_STRING:
-                            expressionToken->type = TOKEN_STR;
-                            expressionToken->data.tokenStringVal = listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_FIRST)->varStrVal;
-                            break;
-                        default:
-                            break;
+                            printf("PRocess constant\n");
+                            switch (listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_FIRST)->datatype)
+                            {
+                            case DATATYPE_INT:
+                                expressionToken->type = TOKEN_INT;
+                                expressionToken->data.tokenIntVal = listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_FIRST)->varIntVal;
+                                break;
+                            case DATATYPE_NUM:
+                                expressionToken->type = TOKEN_NUM;
+                                expressionToken->data.tokenNumVal = listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_FIRST)->varNumVal;
+                                break;
+                            case DATATYPE_STRING:
+                                expressionToken->type = TOKEN_STR;
+                                expressionToken->data.tokenStringVal = listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_FIRST)->varStrVal;
+                                break;
+                            default:
+                                break;
+                            }
                         }
+                        
                     }
                 }
             }
@@ -257,6 +266,9 @@ void buildTreeFromRuleSequence(ast_node *node, DynamicString *ruleSequenceString
         case TOKEN_NIL: 
             node->nodeType = NODE_NIL;
             node->nodeData.nilFlag = 0;
+        case TOKEN_ID:
+            node->nodeType = NODE_ID;
+            node->nodeData.stringData = token->data.tokenStringVal;
         default:
             break;
         }
@@ -1014,7 +1026,7 @@ void simplifyTheTree(ast_node *node)
     }
 }
 
-ast_node *bottomUpAnalysis(htab_list_t* hashTableList, FILE *f, DynamicString *dynamicString, StackTokens *tokenStack)
+ast_node *bottomUpAnalysis(htab_list_t* hashTableList, FILE *f, DynamicString *dynamicString, StackTokens *tokenStack, int flag)
 {   
     // create stack for operands(IDs/consts)
     StackTokens stackOfVariables;
@@ -1066,12 +1078,12 @@ ast_node *bottomUpAnalysis(htab_list_t* hashTableList, FILE *f, DynamicString *d
 
             case 2: // shift 
                 printf("Make shift!!! Top is: %d\n", topNoneTerminal);
-                shiftElement(expressionToken, nextNoneTerminal, &stackOfVariables, &stackOfNoneTerminals, hashTableList);
+                shiftElement(expressionToken, nextNoneTerminal, &stackOfVariables, &stackOfNoneTerminals, hashTableList, flag);
                 topNoneTerminal = stackOfNoneTerminals.top->element;
                 break;
 
             case 3: // equal
-                shiftElement(expressionToken, nextNoneTerminal, &stackOfVariables, &stackOfNoneTerminals, hashTableList);
+                shiftElement(expressionToken, nextNoneTerminal, &stackOfVariables, &stackOfNoneTerminals, hashTableList, flag);
                 topNoneTerminal = stackOfNoneTerminals.top->element;
                 break;    
             default:
@@ -1093,6 +1105,10 @@ ast_node *bottomUpAnalysis(htab_list_t* hashTableList, FILE *f, DynamicString *d
     buildTreeFromRuleSequence(expressionTree, &reversedRuleSequenceString, &stackOfVariables);
     printf("TRee is built\n");
     printAST(expressionTree);
+    if(flag)
+    {
+        return expressionTree;    
+    }
     simplifyTheTree(expressionTree);
     printAST(expressionTree);
     return expressionTree;

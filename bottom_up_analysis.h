@@ -57,6 +57,6 @@ typedef enum ptRulese
 } ptRule;
 
 // main function for bottom-up analysis 
-ast_node *bottomUpAnalysis(htab_list_t* , FILE *, DynamicString *, StackTokens *);
+ast_node *bottomUpAnalysis(htab_list_t* , FILE *, DynamicString *, StackTokens *, int);
 
 #endif // __BOTTOM_UP_ANALYSIS__

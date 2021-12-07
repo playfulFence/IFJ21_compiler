@@ -80,6 +80,10 @@ void print_nodes(ast_node *ast, int indent)
     {
         printf("%s(%s)\n", nodes[ast->nodeType], ast->nodeData.stringData);
     }
+    else if(ast->nodeType == NODE_ID)
+    {
+        printf("%s(%s)\n", nodes[ast->nodeType], ast->nodeData.stringData);
+    }
     else
     {
         printf("%s\n", nodes[ast->nodeType]);
