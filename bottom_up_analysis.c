@@ -2,7 +2,7 @@
 #include "string.h"
 #include "stdio.h"
 
-NoneTerminal transformTokenToNoneTerminal(tokenType_t type)
+NoneTerminal transformTokenToNoneTerminal(tokenType_t type, token_t *token, htab_list_t *hashTableList, NoneTerminalStack *stackOfNoneTerminals)
 {
     NoneTerminal element;
     switch (type)
@@ -53,6 +53,19 @@ NoneTerminal transformTokenToNoneTerminal(tokenType_t type)
             element = NONE_TERMINAL_RB;
             break;
         case TOKEN_ID:
+            if(listSearch(hashTableList, token->data.tokenStringVal, FROM_FIRST)->type != TYPE_VARIABLE)
+            {
+                element = NONE_TERMINAL_DOLLAR;    
+            }
+            else if(stackOfNoneTerminals->top->element == NONE_TERMINAL_ID)
+            {
+                element = NONE_TERMINAL_DOLLAR;
+            }
+            else
+            {
+                element = NONE_TERMINAL_ID;    
+            }
+            break;
         case TOKEN_INT:
         case TOKEN_NUM:
         case TOKEN_STR:
@@ -351,9 +364,17 @@ void expressionSemCheck(ast_node *leftOperand, ast_node *rightOperand, treeNodeT
         }
         if(operatorType == NODE_DIV)
         {
-            if((rightOperand->nodeData.intData == 0 && rightOperand->nodeData.doubleData != 0) ||
-               (rightOperand->nodeData.intData != 0 && rightOperand->nodeData.doubleData == 0) || 
-               (rightOperand->nodeData.intData == 0 && rightOperand->nodeData.doubleData == 0))
+            // if((rightOperand->nodeData.intData == 0 && rightOperand->nodeData.doubleData != 0) ||
+            //    (rightOperand->nodeData.intData != 0 && rightOperand->nodeData.doubleData == 0) || 
+            //    (rightOperand->nodeData.intData == 0 && rightOperand->nodeData.doubleData == 0))
+            // {
+            //     errorExit(ZERO_DIV_ERR, 123);
+            // }
+            if(rightOperand->nodeType == NODE_NUM_ARG && rightOperand->nodeData.doubleData == 0)
+            {
+                errorExit(ZERO_DIV_ERR, 123);
+            }
+            if(rightOperand->nodeType == NODE_INT_ARG && rightOperand->nodeData.intData == 0)
             {
                 errorExit(ZERO_DIV_ERR, 123);
             }
@@ -536,7 +557,7 @@ void processNode(ast_node *node)
             }
             else
             {
-                node->nodeData.intData = node->childrenNodes[0]->nodeData.intData / node->childrenNodes[1]->nodeData.intData;
+                node->nodeData.doubleData = (double)node->childrenNodes[0]->nodeData.intData / (double)node->childrenNodes[1]->nodeData.intData;
                 node->nodeType = NODE_NUM_ARG;
             }
         }
@@ -548,7 +569,10 @@ void processNode(ast_node *node)
         break;
     case NODE_CONC:
         expressionSemCheck(node->childrenNodes[0], node->childrenNodes[1], NODE_CONC);
-        node->nodeData.stringData = strcat(node->childrenNodes[0]->nodeData.stringData, node->childrenNodes[1]->nodeData.stringData);
+        //node->nodeData.stringData = strcat(node->childrenNodes[0]->nodeData.stringData, node->childrenNodes[1]->nodeData.stringData);
+        node->nodeData.stringData = malloc(sizeof(char)*(strlen(node->childrenNodes[0]->nodeData.stringData)+strlen(node->childrenNodes[1]->nodeData.stringData))); 
+        strcat(node->nodeData.stringData, node->childrenNodes[0]->nodeData.stringData);
+        strcat(node->nodeData.stringData, node->childrenNodes[1]->nodeData.stringData);
         node->nodeType = NODE_STR_ARG;
         break;
     case NODE_LESS:
@@ -1013,7 +1037,7 @@ ast_node *bottomUpAnalysis(htab_list_t* hashTableList, FILE *f, DynamicString *d
     pushNoneTerminalElement(&stackOfNoneTerminals, NONE_TERMINAL_DOLLAR);
     topNoneTerminal = stackOfNoneTerminals.top->element;
     expressionToken = getToken(f, dynamicString, tokenStack);
-    nextNoneTerminal = transformTokenToNoneTerminal(expressionToken->type);
+    nextNoneTerminal = transformTokenToNoneTerminal(expressionToken->type, expressionToken, hashTableList, &stackOfNoneTerminals);
 
     // main cycle that processes expression 
     while(ruleSequenceIsNotReady)
@@ -1036,12 +1060,12 @@ ast_node *bottomUpAnalysis(htab_list_t* hashTableList, FILE *f, DynamicString *d
                 break;
             
             case 1: // reduce by the rule
-                //printf("Make reduce!!! Top is: %d\n", topNoneTerminal);
+                printf("Make reduce!!! Top is: %d\n", topNoneTerminal);
                 reduceByTheRule(&topNoneTerminal, &stackOfNoneTerminals, &ruleSequenceString);
                 continue;
 
             case 2: // shift 
-                //printf("Make shift!!! Top is: %d\n", topNoneTerminal);
+                printf("Make shift!!! Top is: %d\n", topNoneTerminal);
                 shiftElement(expressionToken, nextNoneTerminal, &stackOfVariables, &stackOfNoneTerminals, hashTableList);
                 topNoneTerminal = stackOfNoneTerminals.top->element;
                 break;
@@ -1054,7 +1078,7 @@ ast_node *bottomUpAnalysis(htab_list_t* hashTableList, FILE *f, DynamicString *d
                 break;   
         }
         expressionToken = getToken(f, dynamicString, tokenStack);
-        nextNoneTerminal = transformTokenToNoneTerminal(expressionToken->type);
+        nextNoneTerminal = transformTokenToNoneTerminal(expressionToken->type, expressionToken, hashTableList, &stackOfNoneTerminals);
     }
     printf("Rule sequence is ready\n");
     // reversed rule sequence string 
