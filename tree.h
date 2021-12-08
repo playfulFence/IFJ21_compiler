@@ -57,7 +57,11 @@ typedef enum treeNodeTypes
     NODE_PROG,
     NODE_NIL,
     NODE_TRUE,
-    NODE_FALSE
+    NODE_FALSE,
+    NODE_ID_INT_ARG,
+    NODE_ID_NUM_ARG,
+    NODE_ID_STR_ARG,
+    NODE_WRITE_CALL
 }treeNodeType;
 typedef struct abstract_syntax_tree_node
 {

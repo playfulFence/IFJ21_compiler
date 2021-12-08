@@ -201,8 +201,44 @@ void shiftElement(token_t *expressionToken, NoneTerminal nextNoneTerminal, Stack
                         printf("RRRRRRRRRRRRRRRRRRRR\n");
                         if(listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_FIRST)->declareFlag == 0)
                         {
-                            printf("VARIABLE IS UNDEFINED\n");
-                            exit(11);
+                            if(listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_SECOND)->defineFlag == 0) // check if variable is defined
+                            {
+                                if(listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_SECOND)->declareFlag == 0) // check if variable is declared
+                                {
+                                    printf("VARIABLE IS UNDEFINED\n");
+                                    exit(11);
+                                }
+                                else
+                                {
+                                    expressionToken->type = TOKEN_NIL;
+                                    expressionToken->data.nilFlag = 0;
+                                }
+                            }
+                            else
+                            {
+                                if(!flag)
+                                {
+                                    printf("PRocess constant\n");
+                                    switch (listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_SECOND)->datatype)
+                                    {
+                                    case DATATYPE_INT:
+                                        expressionToken->type = TOKEN_INT;
+                                        expressionToken->data.tokenIntVal = listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_SECOND)->varIntVal;
+                                        break;
+                                    case DATATYPE_NUM:
+                                        expressionToken->type = TOKEN_NUM;
+                                        expressionToken->data.tokenNumVal = listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_SECOND)->varNumVal;
+                                        break;
+                                    case DATATYPE_STRING:
+                                        expressionToken->type = TOKEN_STR;
+                                        expressionToken->data.tokenStringVal = listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_SECOND)->varStrVal;
+                                        break;
+                                    default:
+                                        break;
+                                    }
+                                }
+                            }
+                            
                         }
                         else
                         {
@@ -379,12 +415,6 @@ void expressionSemCheck(ast_node *leftOperand, ast_node *rightOperand, treeNodeT
         }
         if(operatorType == NODE_DIV)
         {
-            // if((rightOperand->nodeData.intData == 0 && rightOperand->nodeData.doubleData != 0) ||
-            //    (rightOperand->nodeData.intData != 0 && rightOperand->nodeData.doubleData == 0) || 
-            //    (rightOperand->nodeData.intData == 0 && rightOperand->nodeData.doubleData == 0))
-            // {
-            //     errorExit(ZERO_DIV_ERR, 123);
-            // }
             if(rightOperand->nodeType == NODE_NUM_ARG && rightOperand->nodeData.doubleData == 0)
             {
                 errorExit(ZERO_DIV_ERR, 123);
@@ -1049,7 +1079,7 @@ ast_node *bottomUpAnalysis(htab_list_t* hashTableList, FILE *f, DynamicString *d
     // none terminal for stack of none terminals
     NoneTerminal nextNoneTerminal;
     NoneTerminal topNoneTerminal;
-
+    
     // start process expression
     int ruleSequenceIsNotReady = 1; 
     // push $ none terminal to the stack of none terminals, it is bottom of the stack
@@ -1057,7 +1087,6 @@ ast_node *bottomUpAnalysis(htab_list_t* hashTableList, FILE *f, DynamicString *d
     topNoneTerminal = stackOfNoneTerminals.top->element;
     expressionToken = getToken(f, dynamicString, tokenStack);
     nextNoneTerminal = transformTokenToNoneTerminal(expressionToken->type, expressionToken, hashTableList, &stackOfNoneTerminals);
-
     // main cycle that processes expression 
     while(ruleSequenceIsNotReady)
     {
