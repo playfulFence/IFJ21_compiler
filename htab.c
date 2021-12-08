@@ -468,6 +468,7 @@ htab_data_t* copyDataFuncCall(htab_data_t* from, htab_data_t* to)
 {
     to = malloc(sizeof(htab_data_t));
     to->countOfArgs = from->countOfArgs;
+
     to->countOfReturns = from->countOfReturns;
 
     to->key = from->key;
@@ -491,9 +492,9 @@ htab_data_t* copyDataFuncCall(htab_data_t* from, htab_data_t* to)
     }
 
     for(int i = 0; i < to->countOfReturns; i++)
-    {
+    {                                                               // FIXED NAHOOOOOI
         htab_data_t * tmp = malloc(sizeof(htab_data_t));
-        tmp->datatype = from->datatype;
+        tmp->datatype = from->funcReturns[i]->datatype;
         to->funcReturns[i] = tmp;
     }
     
