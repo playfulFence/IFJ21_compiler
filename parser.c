@@ -651,6 +651,7 @@ void processMultipleAssignment(ast_node *multAssignNode, htab_list_t* hashTableL
         make_new_child(idsNode, idNode);
         token = getToken(f, dynamicString, tokenStack);
     }
+
     // get next token, should be start of expression or start of function call 
     token = getToken(f, dynamicString, tokenStack);
     ast_node *expressionNode;
@@ -751,6 +752,30 @@ void processMultipleAssignment(ast_node *multAssignNode, htab_list_t* hashTableL
         make_new_child(multAssignNode, funcCallNode);
         ungetToken(token, tokenStack);
         processFuncCall(funcCallNode, hashTableList, f, dynamicString, tokenStack);
+
+        for(int i = 0; i < idsNode->childrenCounter; i++)
+            if(idsNode->childrenNodes[i]->hashTableItem->datatype == DATATYPE_INT)
+            {
+                if(funcCallNode->hashTableItem->funcReturns[i]->datatype != DATATYPE_INT)
+                {
+                    errorExit(SEMANTIC_ASSIGN_ERR, 123);
+                }
+            }
+            else if(idsNode->childrenNodes[i]->hashTableItem->datatype == DATATYPE_NUM)
+            {
+                if(funcCallNode->hashTableItem->funcReturns[i]->datatype == DATATYPE_STRING)
+                {
+                    errorExit(SEMANTIC_ASSIGN_ERR, 321);
+                }
+            }
+            else if(idsNode->childrenNodes[i]->hashTableItem->datatype == DATATYPE_STRING)
+            {
+                if(funcCallNode->hashTableItem->funcReturns[i]->datatype != DATATYPE_STRING)
+                {
+                    errorExit(SEMANTIC_ASSIGN_ERR, 228);
+                }
+            }
+
         break;
     default:
         fprintf(stderr,"NOTE processVariableDefStatement - error with assignment\n");
@@ -939,6 +964,7 @@ void processStatement(ast_node *funcDefNode, htab_list_t* hashTableList, FILE *f
             statementNode->nodeType = NODE_MULTIPLE_ASSIGN;
             // process multiple assignment statement
             processMultipleAssignment(statementNode, hashTableList, f, dynamicString, tokenStack); // <statement> --> id <more_ids> = <expression_or_func_call>
+
         }
         else if(nextToken->type == TOKEN_ASSIGNMENT)
         {
@@ -993,6 +1019,7 @@ void processStatement(ast_node *funcDefNode, htab_list_t* hashTableList, FILE *f
     }
     // set statement node as a child of function definition node 
     make_new_child(funcDefNode, statementNode);
+
 }
 
 void processDatatypesList(ast_node* funcDeclNode, FILE *f, DynamicString *dynamicString, StackTokens *tokenStack) /// DONE
@@ -1557,22 +1584,23 @@ void processFunctionDefinition(ast_node *ast, htab_list_t *hashTableList, FILE *
         printf("1005: Process statement\n");
         ungetToken(token, tokenStack);
         processStatement(funcDefNode, hashTableList, f, dynamicString, tokenStack);
+
         token = getToken(f, dynamicString, tokenStack);
     }
 
-    testScope(hashTableList);
+    //testScope(hashTableList);
 
     removeFirst(hashTableList); // whole function has been processed, we can remove first element of scope
 
     funcDefNode->hashTableItem->declareFlag = true;
     funcDefNode->hashTableItem->defineFlag = true;
 
-    
+
 
     // set funcDef node as a child of program root
     make_new_child(ast, funcDefNode);
 
-
+     
 }
 
 // <prog> --> require "ifj21" <functions> EOF

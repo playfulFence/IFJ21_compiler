@@ -59,7 +59,6 @@ int main(int argc, char** argv)
      printAST(ast);
     
     
-    
     // ast_node *ast = make_new_node();
     // ast_node *child1 = make_new_node();
     // make_new_child(ast, child1);
