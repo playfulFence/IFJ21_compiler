@@ -2,6 +2,128 @@
 #include "string.h"
 #include "stdio.h"
 
+int getLexicoghraphicValue(char* string)
+{
+    int value = 0;
+
+    for(int i = 0; i < strlen(string); i ++)
+    {
+        switch (string[i])
+        {
+        case 'A':
+        case 'a':
+           value += 1;
+            break;
+        case 'B':
+        case 'b':
+           value += 2;
+            break;
+        case 'C':
+        case 'c':
+           value += 3;
+            break;
+        case 'D':
+        case 'd':
+           value += 4;
+            break;
+        case 'E':
+        case 'e':
+           value += 5;
+            break;
+        case 'F':
+        case 'f':
+           value += 6;
+            break;
+        case 'G':
+        case 'g':
+           value += 7;
+            break;
+        case 'H':
+        case 'h':
+           value += 8;
+            break;
+        case 'I':
+        case 'i':
+           value += 9;
+            break;
+        case 'J':
+        case 'j':
+           value += 10;
+            break;
+        case 'K':
+        case 'k':
+           value += 11;
+            break;
+        case 'L':
+        case 'l':
+           value += 12;
+            break;
+        case 'M':
+        case 'm':
+           value += 13;
+            break;
+        case 'N':
+        case 'n':
+           value += 14;
+            break;
+        case 'O':
+        case 'o':
+           value += 15;
+            break;
+        case 'P':
+        case 'p':
+           value += 16;
+            break;
+        case 'Q':
+        case 'q':
+           value += 17;
+            break;
+        case 'R':
+        case 'r':
+           value += 18;
+            break;
+        case 'S':
+        case 's':
+           value += 19;
+            break;
+        case 'T':
+        case 't':
+           value += 20;
+            break;
+        case 'U':
+        case 'u':
+           value += 21;
+            break;
+        case 'V':
+        case 'v':
+           value += 22;
+            break;
+        case 'W':
+        case 'w':
+           value += 23;
+            break;
+        case 'X':
+        case 'x':
+           value += 24;
+            break;
+        case 'Y':
+        case 'y':
+           value += 25;
+            break;
+        case 'Z':
+        case 'z':
+           value += 26;
+            break;
+        
+        default:
+            errorExit(SEMANTIC_ANOTHER_ERR, 123);
+            break;
+        }
+    }
+    return value;
+}
+
+
 NoneTerminal transformTokenToNoneTerminal(tokenType_t type, token_t *token, htab_list_t *hashTableList, NoneTerminalStack *stackOfNoneTerminals)
 {
     NoneTerminal element;

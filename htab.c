@@ -165,7 +165,7 @@ bool htab_erase(htab_t * t, htab_key_t key)
 
 void printWord(htab_data_t *data)
 {
-    printf("%s\tARGS:%d\tRETS:%d\tSTRING: %s\n", data->key, data->countOfArgs, data->countOfReturns, data->varStrVal);
+    printf("%s\tARGS:%d\tRETS:%d\n", data->key, data->countOfArgs, data->countOfReturns);
 }
 
 void htab_for_each(const htab_t * t, void (*f)(htab_data_t *data))
