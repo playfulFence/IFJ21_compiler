@@ -503,58 +503,67 @@ htab_data_t* copyDataFuncCall(htab_data_t* from, htab_data_t* to)
 
 void insertBuiltIn(htab_t* htab)
 {
-    // reads(): string
-    htab_data_t* reads = htab_lookup_add(htab, "reads"); 
-    reads->countOfReturns = 1;
-    reads->countOfArgs = 0;
-    reads->declareFlag = true;
-    reads->defineFlag = true;
-    reads->type = TYPE_FUNC;
-    htab_data_t* readsReturn = malloc(sizeof(htab_data_t));
-    readsReturn->datatype = DATATYPE_STRING;
-    readsReturn->type = TYPE_STRING;
-    makeNewRet(reads, readsReturn);
+    if(!htab_find(htab, "reads"))
+    {
+        htab_data_t* reads = htab_lookup_add(htab, "reads");
+        reads->countOfArgs = 0;
+        reads->declareFlag = true;
+        reads->defineFlag = true;
+        reads->type = TYPE_FUNC;
+        htab_data_t* readsReturn = malloc(sizeof(htab_data_t));
+        readsReturn->datatype = DATATYPE_STRING;
+        readsReturn->type = TYPE_STRING;
+        makeNewRet(reads, readsReturn);
+
+        printf("%d - reads COUNT OF RETS\n", reads->countOfReturns);
+    }
     
     // readi(): integer
-    htab_data_t* readi = htab_lookup_add(htab, "readi");
-    readi->countOfReturns = 1;
-    readi->countOfArgs = 0;
-    readi->declareFlag = true;
-    readi->defineFlag = true;
-    readi->type = TYPE_FUNC;
-    htab_data_t* readiReturn = malloc(sizeof(htab_data_t));
-    readiReturn->datatype = DATATYPE_STRING;
-    readiReturn->type = TYPE_STRING;
-    makeNewRet(readi, readiReturn);
+   if(!htab_find(htab, "readi"))
+    {
+        htab_data_t* readi = htab_lookup_add(htab, "readi");
+        readi->countOfArgs = 0;
+        readi->declareFlag = true;
+        readi->defineFlag = true;
+        readi->type = TYPE_FUNC;
+        htab_data_t* readiReturn = malloc(sizeof(htab_data_t));
+        readiReturn->datatype = DATATYPE_STRING;
+        readiReturn->type = TYPE_STRING;
+        makeNewRet(readi, readiReturn);
+    }
 
     // readn(): number
-    htab_data_t* readn = htab_lookup_add(htab, "readn");
-    readn->countOfReturns = 1;
-    readn->countOfArgs = 0;
-    readn->declareFlag = true;
-    readn->defineFlag = true;
-    readn->type = TYPE_FUNC;
-    htab_data_t* readnReturn = malloc(sizeof(htab_data_t));
-    readnReturn->datatype = DATATYPE_INT;
-    readnReturn->type = TYPE_INT;
-    makeNewRet(readn, readnReturn);
+    if(!htab_find(htab, "readn"))
+    {
+        htab_data_t* readn = htab_lookup_add(htab, "readn");
+        readn->countOfArgs = 0;
+        readn->declareFlag = true;
+        readn->defineFlag = true;
+        readn->type = TYPE_FUNC;
+        htab_data_t* readnReturn = malloc(sizeof(htab_data_t));
+        readnReturn->datatype = DATATYPE_INT;
+        readnReturn->type = TYPE_INT;
+        makeNewRet(readn, readnReturn);
+    }
 
 
-    //TODO insert in function call
-    // // write(term1, term2, ... termN)
-    htab_data_t* write = htab_lookup_add(htab, "write");
-    write->declareFlag = true;
-    write->defineFlag = true;
-    write->type = TYPE_FUNC;
+    if(!htab_find(htab, "write"))
+    {
+        // // write(term1, term2, ... termN)
+        htab_data_t* write = htab_lookup_add(htab, "write");
+        write->declareFlag = true;
+        write->defineFlag = true;
+        write->type = TYPE_FUNC;
+    }
     
 
     // tointeger(number) : integer
-    htab_data_t* tointeger = htab_lookup_add(htab, "tointeger");
-    tointeger->countOfArgs = 1;
-    tointeger->countOfReturns = 1;
-    tointeger->declareFlag = true;
-    tointeger->defineFlag = true;
-    tointeger->type = TYPE_FUNC;
+    if(!htab_find(htab, "tointeger"))
+    {
+        htab_data_t* tointeger = htab_lookup_add(htab, "tointeger");
+        tointeger->declareFlag = true;
+        tointeger->defineFlag = true;
+        tointeger->type = TYPE_FUNC;
 
     htab_data_t* tointegerArg = malloc(sizeof(htab_data_t));
     htab_data_t* tointegerRet = malloc(sizeof(htab_data_t));
@@ -567,88 +576,92 @@ void insertBuiltIn(htab_t* htab)
 
     makeNewArg(tointeger,tointegerArg);
     makeNewRet(tointeger,tointegerRet);
+    }
 
 
     // substr( string, number, number ) : string
-    htab_data_t* substr = htab_lookup_add(htab, "substr");
-    substr->countOfArgs = 3;
-    substr->countOfReturns = 1;
-    substr->declareFlag = true;
-    substr->defineFlag = true; 
-    substr->type = TYPE_FUNC;
+    if(!htab_find(htab, "substr"))
+    {
+        htab_data_t* substr = htab_lookup_add(htab, "substr");
+        substr->declareFlag = true;
+        substr->defineFlag = true; 
+        substr->type = TYPE_FUNC;
 
-    htab_data_t* substrArg1 = malloc(sizeof(htab_data_t));
-    htab_data_t* substrArg2 = malloc(sizeof(htab_data_t));
-    htab_data_t* substrArg3 = malloc(sizeof(htab_data_t));
+        htab_data_t* substrArg1 = malloc(sizeof(htab_data_t));
+        htab_data_t* substrArg2 = malloc(sizeof(htab_data_t));
+        htab_data_t* substrArg3 = malloc(sizeof(htab_data_t));
 
-    htab_data_t* substrRet = malloc(sizeof(htab_data_t));
+        htab_data_t* substrRet = malloc(sizeof(htab_data_t));
 
-    substrArg1->datatype = DATATYPE_STRING;
-    substrArg1->type = TYPE_STRING;
+        substrArg1->datatype = DATATYPE_STRING;
+        substrArg1->type = TYPE_STRING;
 
-    substrArg2->datatype = DATATYPE_NUM;
-    substrArg2->type = TYPE_NUM;
+        substrArg2->datatype = DATATYPE_NUM;
+        substrArg2->type = TYPE_NUM;
 
-    substrArg3->datatype = DATATYPE_NUM;
-    substrArg3->type = TYPE_NUM;
+        substrArg3->datatype = DATATYPE_NUM;
+        substrArg3->type = TYPE_NUM;
 
-    substrRet->datatype = DATATYPE_STRING;
-    substrRet->type = TYPE_STRING;
+        substrRet->datatype = DATATYPE_STRING;
+        substrRet->type = TYPE_STRING;
 
-    makeNewArg(substr, substrArg1);
-    makeNewArg(substr, substrArg2);
-    makeNewArg(substr, substrArg3);
+        makeNewArg(substr, substrArg1);
+        makeNewArg(substr, substrArg2);
+        makeNewArg(substr, substrArg3);
 
-    makeNewRet(substr, substrRet);
-
+        makeNewRet(substr, substrRet);
+    }
 
     // ord( string, integer) : integer
-    htab_data_t* ord = htab_lookup_add(htab, "ord");
-    ord->countOfArgs = 2;
-    ord->countOfReturns = 1;
-    ord->declareFlag = true;
-    ord->defineFlag = true; 
-    ord->type = TYPE_FUNC;
+    if(!htab_find(htab, "ord"))
+    {
+        htab_data_t* ord = htab_lookup_add(htab, "ord");
+        ord->declareFlag = true;
+        ord->defineFlag = true; 
+        ord->type = TYPE_FUNC;
 
-    htab_data_t* ordArg1 = malloc(sizeof(htab_data_t));
-    htab_data_t* ordArg2 = malloc(sizeof(htab_data_t));
-    
-    htab_data_t* ordRet = malloc(sizeof(htab_data_t));
+        htab_data_t* ordArg1 = malloc(sizeof(htab_data_t));
+        htab_data_t* ordArg2 = malloc(sizeof(htab_data_t));
+        
+        htab_data_t* ordRet = malloc(sizeof(htab_data_t));
 
-    ordArg1->datatype = DATATYPE_STRING;
-    ordArg1->type = TYPE_STRING;
+        ordArg1->datatype = DATATYPE_STRING;
+        ordArg1->type = TYPE_STRING;
 
-    ordArg2->datatype = DATATYPE_INT;
-    ordArg2->type = TYPE_INT;
+        ordArg2->datatype = DATATYPE_INT;
+        ordArg2->type = TYPE_INT;
 
-    ordRet->datatype = DATATYPE_INT;
-    ordRet->type = TYPE_INT;
+        ordRet->datatype = DATATYPE_INT;
+        ordRet->type = TYPE_INT;
 
-    makeNewArg(ord, ordArg1);
-    makeNewArg(ord, ordArg2);
+        makeNewArg(ord, ordArg1);
+        makeNewArg(ord, ordArg2);
 
-    makeNewRet(ord, ordRet);
+        makeNewRet(ord, ordRet);
+    }
+
 
     // chr(integer): string
-    htab_data_t* chr = htab_lookup_add(htab, "chr");
-    chr->countOfArgs = 1;
-    chr->countOfReturns = 1;
-    chr->declareFlag = true;
-    chr->defineFlag = true; 
-    chr->type = TYPE_FUNC;
+    if(!htab_find(htab, "chr"))
+    {
+        htab_data_t* chr = htab_lookup_add(htab, "chr");
+        chr->declareFlag = true;
+        chr->defineFlag = true; 
+        chr->type = TYPE_FUNC;
 
-    htab_data_t* chrArg = malloc(sizeof(htab_data_t));
-    htab_data_t* chrRet = malloc(sizeof(htab_data_t));
+        htab_data_t* chrArg = malloc(sizeof(htab_data_t));
+        htab_data_t* chrRet = malloc(sizeof(htab_data_t));
 
-    chrArg->datatype = DATATYPE_INT;
-    chrArg->type = TYPE_INT;
+        chrArg->datatype = DATATYPE_INT;
+        chrArg->type = TYPE_INT;
 
-    chrRet->datatype = DATATYPE_STRING;
-    chrRet->type = TYPE_STRING;
+        chrRet->datatype = DATATYPE_STRING;
+        chrRet->type = TYPE_STRING;
 
-    makeNewArg(chr, chrArg);
+        makeNewArg(chr, chrArg);
 
-    makeNewArg(chr, chrRet);
+        makeNewArg(chr, chrRet);
+    }
 
 
 
