@@ -124,29 +124,32 @@ void processReturnStatement(ast_node *returnNode, ast_node* funcDefNode, htab_li
     token_t *nextToken;
     if(detectExpressionOrFunctionCall(token->type, f, dynamicString, tokenStack) == 1)
     {
+        
         ungetToken(token, tokenStack);
         do
         {
-            if(returnCounter > funcDefNode->hashTableItem->countOfReturns)          // return int x, string y, num z
-            {
-                printf("0\n");
-                errorExit(SEMANTIC_PARAM_COUNT_ERR, token->line);                   // must return int, num, string
-            }
+            
+            // if(returnCounter > funcDefNode->hashTableItem->countOfReturns)          // return int x, string y, num z
+            // {
+            //     printf("0\n");
+            //     errorExit(SEMANTIC_PARAM_COUNT_ERR, token->line);                   // must return int, num, string
+            // }
+            // printf("I was here\n");
+             printf("136\n");
+             expressionNode = bottomUpAnalysis(hashTableList, f, dynamicString, tokenStack, 1); // TODO
+            // printf("138\n");
 
-            expressionNode = bottomUpAnalysis(hashTableList, f, dynamicString, tokenStack, 1); // TODO
-
-
-            if(expressionNode->nodeType == NODE_STR_ARG && funcDefNode->hashTableItem->funcReturns[returnCounter]->datatype != DATATYPE_STRING)
-            {
-                printf("1\n");
-                errorExit(SEMANTIC_PARAM_COUNT_ERR, token->line);
-            }
-            else if(expressionNode->nodeType == NODE_NUM_ARG &&                               // NUM can't be returned as INT, bit INT CAN be returned as NUM
-                (funcDefNode->hashTableItem->funcReturns[returnCounter]->datatype == DATATYPE_INT))
-            {
-                printf("2\n");
-                errorExit(SEMANTIC_PARAM_COUNT_ERR, token->line);
-            }
+            // if(expressionNode->nodeType == NODE_STR_ARG && funcDefNode->hashTableItem->funcReturns[returnCounter]->datatype != DATATYPE_STRING)
+            // {
+            //     printf("1\n");
+            //     errorExit(SEMANTIC_PARAM_COUNT_ERR, token->line);
+            // }
+            // else if(expressionNode->nodeType == NODE_NUM_ARG &&                               // NUM can't be returned as INT, bit INT CAN be returned as NUM
+            //     (funcDefNode->hashTableItem->funcReturns[returnCounter]->datatype == DATATYPE_INT))
+            // {
+            //     printf("2\n");
+            //     errorExit(SEMANTIC_PARAM_COUNT_ERR, token->line);
+            // }
            /* else if(funcDefNode->hashTableItem->funcReturns[returnCounter]->datatype == DATATYPE_NIL && expressionNode->nodeType = NODE_NIL)
             {
                 errorExit(SEMANTIC_PARAM_COUNT_ERR, token->line);
@@ -176,17 +179,18 @@ void processReturnStatement(ast_node *returnNode, ast_node* funcDefNode, htab_li
             {
                 ungetToken(token, tokenStack);
 
-                if(returnCounter < funcDefNode->hashTableItem->countOfReturns)
-                {
-                    printf("4\n");
-                    errorExit(SEMANTIC_PARAM_COUNT_ERR, token->line);
-                }
+                // if(returnCounter < funcDefNode->hashTableItem->countOfReturns)
+                // {
+                //     printf("4\n");
+                //     errorExit(SEMANTIC_PARAM_COUNT_ERR, token->line);
+                // }
+                printf("185\n");
                 return;
             }
             
         } while (token->type == TOKEN_COMMA);
     }
-    
+    printf("190\n");
 }
 
 // <statement> --> while expression do <list_of_statements> end
@@ -960,7 +964,7 @@ void processVariableDefStatement(ast_node *varDefNode, htab_list_t* hashTableLis
 }
 
 void processStatement(ast_node *funcDefNode, htab_list_t* hashTableList, FILE *f, DynamicString *dynamicString, StackTokens *tokenStack)
-{
+{   
     printf("PROCESS STATEMNER\n");
     // make node for statement 
     ast_node *statementNode = make_new_node();
