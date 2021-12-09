@@ -1,3 +1,10 @@
+// Authors : Maksim Naumenko(xnaume01)
+        //   Kirill Mikhailov(xmikha00)
+
+//Projekt: Implementace překladače imperativního jazyka IFJ21
+
+
+
 #ifndef __BOTTOM_UP_ANALYSIS__H__
 #define  __BOTTOM_UP_ANALYSIS__H__
 

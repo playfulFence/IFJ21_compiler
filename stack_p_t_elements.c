@@ -1,3 +1,8 @@
+// Authors : Maksim Naumenko(xnaume01)
+
+//Projekt: Implementace překladače imperativního jazyka IFJ21
+
+
 #include "stack_p_t_elements.h"
 
 // Function to initialize the stack

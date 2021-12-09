@@ -1,3 +1,8 @@
+// Authors : Maksim Naumenko(xnaume01)
+
+//Projekt: Implementace překladače imperativního jazyka IFJ21
+
+
 #ifndef __STACK_P_T_ELEMENTS__H__
 #define __STACK_P_T_ELEMENTS__H__
 

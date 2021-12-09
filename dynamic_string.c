@@ -1,4 +1,10 @@
+// Authors : Maksim Naumenko(xnaume01)
+
+//Projekt: Implementace překladače imperativního jazyka IFJ21
+
+
 #include "dynamic_string.h"
+#include "error.h"
 
 void DynamicStringInit(DynamicString *dynamicString)
 {
@@ -27,7 +33,7 @@ void DynamicStringInsertLast(DynamicString *dynamicString, char symbol)
     SymbolPtr ephemera = (SymbolPtr)malloc(sizeof(struct Symbol));
     if(ephemera == NULL)
     {
-        exit(EXIT_FAILURE);
+        errorExit(COMPILER_INTERN_ERR, 0);
     }
     ephemera->symbol = symbol;
     ephemera->nextSymbol = NULL;
@@ -46,9 +52,10 @@ void DynamicStringInsertLast(DynamicString *dynamicString, char symbol)
 void DynamicStringInsertFirst(DynamicString *dynamicString, char symbol)
 {
     SymbolPtr ephemera = (SymbolPtr)malloc(sizeof(struct Symbol));
+    //toThrowOut(ephemera);
     if(ephemera == NULL)
     {
-        exit(EXIT_FAILURE);
+        errorExit(COMPILER_INTERN_ERR, 0);
     }
     ephemera->symbol = symbol;
     ephemera->nextSymbol = NULL;
@@ -80,6 +87,7 @@ char *DynamicStringToString(DynamicString *dynamicString)
     int size = dynamicString->size + 1;
     int i = 0;
     char *string = malloc(size*sizeof(char)); // +1 не точно!!!
+    //toThrowOut(string);
 
     SymbolPtr ephemera = dynamicString->firstSymbol;
     while(ephemera != NULL)
@@ -117,12 +125,8 @@ double DynamicStringExpToDouble(DynamicString *dynamicString)
 void printDynamicString(DynamicString *dynamicString)
 {
     SymbolPtr pathfinder = dynamicString->firstSymbol;
-    printf(".........DYNAMIC STRING.........\n");
-    printf("START ");
     while(pathfinder->nextSymbol != NULL)
     {
-        printf("[ %c ]-->", pathfinder->symbol);
         pathfinder = pathfinder->nextSymbol;
     }
-    printf("[ %c ] END\n", pathfinder->symbol);
 }

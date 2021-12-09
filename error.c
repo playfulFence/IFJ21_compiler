@@ -1,3 +1,8 @@
+// Authors : Kirill Mikhailov(xmikha00)
+
+//Projekt: Implementace překladače imperativního jazyka IFJ21
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -51,18 +56,4 @@ void errorExit(errorType_t errorNum, int line)
     }
 }
 
-// void checkBuiltIn(char* funcName, int line)
-// {
-//     if(!strcmp(funcName, "reads") ||
-//        !strcmp(funcName, "readi") ||
-//        !strcmp(funcName, "readn") ||
-//        !strcmp(funcName, "write") ||
-//        !strcmp(funcName, "tointeger") ||
-//        !strcmp(funcName, "substr") ||
-//        !strcmp(funcName, "ord") ||
-//        !strcmp(funcName, "chr"))
-//        {
-//            errorExit(SEMANTIC_UNDEF_REDEF_ERR, line);
-//        }
-// }
 

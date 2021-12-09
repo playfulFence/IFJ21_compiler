@@ -1,3 +1,9 @@
+// Authors : Maksim Naumenko(xnaume01)
+        //   Kirill Mikhailov(xmikha00)
+
+//Projekt: Implementace překladače imperativního jazyka IFJ21
+
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -73,6 +79,15 @@ void processStatement(ast_node *funcDefNode, htab_list_t* hashTableList, FILE *f
 FILE* openFile(int argc, char** argv)
 {
     FILE* f = (argc > 1) ? fopen(argv[1], "r") : stdin;
+    if(argc > 1)
+    {
+        if(!f)
+        {
+            fprintf(stderr, "Can't open file!!!\n");
+            errorExit(COMPILER_INTERN_ERR, 0);
+        }
+    }
+    
     return f;
 }
 
@@ -116,7 +131,7 @@ int detectExpressionOrFunctionCall(tokenType_t tokenType, FILE *f, DynamicString
 }
 
 // <statement> --> return <list_of_expressions>
-void processReturnStatement(ast_node *returnNode, ast_node* funcDefNode, htab_list_t* hashTableList, FILE *f, DynamicString *dynamicString, StackTokens *tokenStack)
+void processReturnStatement(ast_node *returnNode, htab_list_t* hashTableList, FILE *f, DynamicString *dynamicString, StackTokens *tokenStack)
 {
     token_t *token = getToken(f, dynamicString, tokenStack);
     int returnCounter = 0;
@@ -128,35 +143,8 @@ void processReturnStatement(ast_node *returnNode, ast_node* funcDefNode, htab_li
         ungetToken(token, tokenStack);
         do
         {
+            expressionNode = bottomUpAnalysis(hashTableList, f, dynamicString, tokenStack, 1); 
             
-            // if(returnCounter > funcDefNode->hashTableItem->countOfReturns)          // return int x, string y, num z
-            // {
-            //     printf("0\n");
-            //     errorExit(SEMANTIC_PARAM_COUNT_ERR, token->line);                   // must return int, num, string
-            // }
-            // printf("I was here\n");
-             printf("136\n");
-             expressionNode = bottomUpAnalysis(hashTableList, f, dynamicString, tokenStack, 1); // TODO
-            // printf("138\n");
-
-            // if(expressionNode->nodeType == NODE_STR_ARG && funcDefNode->hashTableItem->funcReturns[returnCounter]->datatype != DATATYPE_STRING)
-            // {
-            //     printf("1\n");
-            //     errorExit(SEMANTIC_PARAM_COUNT_ERR, token->line);
-            // }
-            // else if(expressionNode->nodeType == NODE_NUM_ARG &&                               // NUM can't be returned as INT, bit INT CAN be returned as NUM
-            //     (funcDefNode->hashTableItem->funcReturns[returnCounter]->datatype == DATATYPE_INT))
-            // {
-            //     printf("2\n");
-            //     errorExit(SEMANTIC_PARAM_COUNT_ERR, token->line);
-            // }
-           /* else if(funcDefNode->hashTableItem->funcReturns[returnCounter]->datatype == DATATYPE_NIL && expressionNode->nodeType = NODE_NIL)
-            {
-                errorExit(SEMANTIC_PARAM_COUNT_ERR, token->line);
-            }*/
-            
-
-
             make_new_child(returnNode, expressionNode);
             token = getToken(f, dynamicString, tokenStack);
 
@@ -178,13 +166,6 @@ void processReturnStatement(ast_node *returnNode, ast_node* funcDefNode, htab_li
             else
             {
                 ungetToken(token, tokenStack);
-
-                // if(returnCounter < funcDefNode->hashTableItem->countOfReturns)
-                // {
-                //     printf("4\n");
-                //     errorExit(SEMANTIC_PARAM_COUNT_ERR, token->line);
-                // }
-                printf("185\n");
                 return;
             }
             
@@ -205,7 +186,6 @@ void processWhileStatement(ast_node *whileNode, htab_list_t* hashTableList, FILE
     token_t *token = getToken(f, dynamicString, tokenStack);
     if(token->type != TOKEN_DO)
     {
-        printf("NOTE %s - no \"do\" token\n", __func__);
         errorExit(BAD_SYNTAX_ERR, token->line);
     }
     ast_node *whileDoNode = make_new_node();
@@ -256,10 +236,8 @@ void processIfStatement(ast_node *ifNode, htab_list_t* hashTableList, FILE *f, D
     
     while(token->type != TOKEN_ELSE)
     {
-        printf("CHECK THEN\n");
         ungetToken(token, tokenStack);
         processStatement(thenNode, hashTableList, f, dynamicString, tokenStack);
-        printf("CHECK THEN AFTER\n");
         token = getToken(f, dynamicString, tokenStack);
     }
     removeFirst(hashTableList); // removed "then"-statement table from scope structure
@@ -331,8 +309,6 @@ void processFuncCall(ast_node *funcCallNode, htab_list_t* hashTableList, FILE *f
        !strcmp(funcCallNode->nodeData.stringData, "ord")    ||
        !strcmp(funcCallNode->nodeData.stringData, "chr"))
     {
-        htab_data_t *newArg;
-        printf("THIS IS WRITE\n");
         ast_node * writeCallNode = make_new_node();
         writeCallNode->nodeType = NODE_WRITE_CALL;
         make_new_child(funcCallNode, writeCallNode);
@@ -356,7 +332,6 @@ void processFuncCall(ast_node *funcCallNode, htab_list_t* hashTableList, FILE *f
             case TOKEN_STR:
                 argumentNode->nodeType = NODE_STR_ARG;
                 argumentNode->nodeData.stringData = token->data.tokenStringVal;
-                printf("________________%s_________________\n", argumentNode->nodeData.stringData);
                 make_new_child(writeCallNode, argumentNode);
                 break;
             case TOKEN_ID:
@@ -408,13 +383,11 @@ void processFuncCall(ast_node *funcCallNode, htab_list_t* hashTableList, FILE *f
                 errorExit(SEMANTIC_PARAM_COUNT_ERR, token->line);
             }
 
-            printf("%d ==== token type \n", funcCallNode->hashTableItem->funcArgs[countActualArgs]->datatype);
             switch (token->type)
             {
             case TOKEN_INT:
                 if(funcCallNode->hashTableItem->funcArgs[countActualArgs]->datatype == DATATYPE_STRING)
                 {   
-                    printf("ЭТО?\n");
                     fprintf(stderr, "NOTE: Argument number %d in function %s\n", countActualArgs, token->data.tokenStringVal);
                     errorExit(SEMANTIC_PARAM_COUNT_ERR, token->line);
                 }
@@ -461,7 +434,6 @@ void processFuncCall(ast_node *funcCallNode, htab_list_t* hashTableList, FILE *f
                     funcCallNode->hashTableItem->funcArgs[countActualArgs]->varNumVal = token->data.tokenNumVal;
                     break;
                 case DATATYPE_STRING:
-                    printf("386386386386386386386386386386386386386386386 %d, %d\n", funcCallNode->hashTableItem->funcArgs[countActualArgs]->datatype, token->type);
                     if(funcCallNode->hashTableItem->funcArgs[countActualArgs]->datatype != DATATYPE_STRING)
                     {
                         fprintf(stderr, "NOTE: Argument number %d function %s\n", countActualArgs, token->data.tokenStringVal);
@@ -499,7 +471,6 @@ void processFuncCall(ast_node *funcCallNode, htab_list_t* hashTableList, FILE *f
 // <statement> --> id = <expression_or_func_call>
 void processSingleAssignment(ast_node *singleAssignNode, htab_list_t* hashTableList, FILE *f, DynamicString *dynamicString, StackTokens *tokenStack)
 {
-    printf("CHECK THEN IN ASSIGNMENT\n");
     token_t *token = getToken(f, dynamicString, tokenStack);
     if(token->type != TOKEN_ID)
     {
@@ -536,7 +507,6 @@ void processSingleAssignment(ast_node *singleAssignNode, htab_list_t* hashTableL
     }
     // get next token, should be start of expression or start of function call 
     token = getToken(f, dynamicString, tokenStack);
-    ast_node *expressionsNode;
     ast_node *expressionNode;
     ast_node *funcCallNode;
     int counterOfValues = 0;
@@ -591,7 +561,7 @@ void processSingleAssignment(ast_node *singleAssignNode, htab_list_t* hashTableL
                     idNode->nodeType = NODE_STR_ARG;
                     break;
                 case NODE_TRUE:
-                    printf("ASSIGN WITH TRUE\n");
+                   fprintf(stderr,"ASSIGN WITH TRUE\n");
                     errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 1243);
                 case NODE_NIL:
                     // TODO NOT SURE HOW IT SHOULD BE WITH ASSIGN NIL
@@ -606,7 +576,7 @@ void processSingleAssignment(ast_node *singleAssignNode, htab_list_t* hashTableL
             }
             else
             {
-                printf("DIFFERENT AMMOUNT OF IDS AND VALUES\n");
+               fprintf(stderr,"DIFFERENT AMMOUNT OF IDS AND VALUES\n");
                 // TODO CHECK ERROR TYPE 
                 errorExit(SEMANTIC_ASSIGN_ERR,123);
             }
@@ -793,7 +763,7 @@ void processMultipleAssignment(ast_node *multAssignNode, htab_list_t* hashTableL
                     idsNode->childrenNodes[counterOfValues]->hashTableItem->defineFlag = 1;
                     break;
                 case NODE_TRUE:
-                    printf("ASSIGN WITH TRUE\n");
+                    fprintf(stderr,"ASSIGN WITH TRUE\n");
                     errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 1243);
                 case NODE_NIL:
                     // TODO NOT SURE HOW IT SHOULD BE WITH ASSIGN NIL
@@ -807,7 +777,7 @@ void processMultipleAssignment(ast_node *multAssignNode, htab_list_t* hashTableL
             }
             else
             {
-                printf("DIFFERENT AMMOUNT OF IDS AND VALUES\n");
+              fprintf(stderr,"DIFFERENT AMMOUNT OF IDS AND VALUES\n");
                 // TODO CHECK ERROR TYPE 
                 errorExit(SEMANTIC_ASSIGN_ERR,123);
             }
@@ -858,8 +828,8 @@ void processMultipleAssignment(ast_node *multAssignNode, htab_list_t* hashTableL
             {
                 if(idsNode->childrenCounter > funcCallNode->hashTableItem->countOfReturns)
                 {
-                    printf("BAD AMMOUNT OF RETURN VALUES");
-                    exit(221);
+                    fprintf(stderr,"BAD AMMOUNT OF RETURN VALUES");
+                    errorExit(SEMANTIC_PARAM_COUNT_ERR, token->line);
                 }
                 else if(idsNode->childrenCounter <= funcCallNode->hashTableItem->countOfReturns)
                 {
@@ -1023,7 +993,7 @@ void processVariableDefStatement(ast_node *varDefNode, htab_list_t* hashTableLis
                     strcpy(variableNode->hashTableItem->varStrVal, variableNode->nodeData.stringData);
                     break;
                 case NODE_TRUE:
-                    printf("ASSIGN WITH TRUE\n");
+                    fprintf(stderr,"ASSIGN WITH TRUE\n");
                     errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 1243);
                 case NODE_NIL:
                     variableNode->hashTableItem->type = TYPE_VARIABLE;
@@ -1061,8 +1031,8 @@ void processVariableDefStatement(ast_node *varDefNode, htab_list_t* hashTableLis
                     return;
                 }else if ((variableNode->hashTableItem->datatype == DATATYPE_INT && funcCallNode->hashTableItem->datatype != DATATYPE_INT) || (variableNode->hashTableItem->datatype == DATATYPE_NUM && funcCallNode->hashTableItem->datatype == DATATYPE_STRING) || (variableNode->hashTableItem->datatype == DATATYPE_STRING && funcCallNode->hashTableItem->datatype != DATATYPE_STRING))
                 {
-                    printf("VARDEF ERROR WRANG RETURN DATATYPES ");
-                    exit(123);
+                    fprintf(stderr,"VARDEF ERROR WRONG RETURN DATATYPES ");
+                    errorExit(SEMANTIC_ASSIGN_ERR, token->line);
                 }
             }
             
@@ -1079,7 +1049,6 @@ void processVariableDefStatement(ast_node *varDefNode, htab_list_t* hashTableLis
 
 void processStatement(ast_node *funcDefNode, htab_list_t* hashTableList, FILE *f, DynamicString *dynamicString, StackTokens *tokenStack)
 {   
-    printf("PROCESS STATEMNER\n");
     // make node for statement 
     ast_node *statementNode = make_new_node();
 
@@ -1096,7 +1065,6 @@ void processStatement(ast_node *funcDefNode, htab_list_t* hashTableList, FILE *f
         processVariableDefStatement(statementNode, hashTableList, f, dynamicString, tokenStack); // <statement> --> local id : datatype = <expression_or_func_call>
         break;
     case TOKEN_ID:
-        printf("STATEMENT ID CASE\n");
         // get next token to detect type of statement
         nextToken = getToken(f, dynamicString, tokenStack);
         if (nextToken->type == TOKEN_COMMA)
@@ -1155,7 +1123,7 @@ void processStatement(ast_node *funcDefNode, htab_list_t* hashTableList, FILE *f
         // set type of the statement node to return statement
         statementNode->nodeType = NODE_RETURN;
         // process return statement
-        processReturnStatement(statementNode, funcDefNode, hashTableList, f, dynamicString, tokenStack); // <statement> --> return <list_of_expressions>
+        processReturnStatement(statementNode, hashTableList, f, dynamicString, tokenStack); // <statement> --> return <list_of_expressions>
         break;
     default:
         fprintf(stderr, "NOTE statement - wrong kind of token %d\n", token->type);
@@ -1172,7 +1140,7 @@ void processDatatypesList(ast_node* funcDeclNode, FILE *f, DynamicString *dynami
     token_t* token = getToken(f, dynamicString, tokenStack);
     if(!(token->type == TOKEN_INT_KW || token->type == TOKEN_NUM_KW || token->type == TOKEN_STR_KW))
     {
-        printf("NOTE: ARGUMENTS IN FUNCTION DECLARATION SHOULD BE JUST DATATYPES\n");
+       fprintf(stderr,"NOTE: ARGUMENTS IN FUNCTION DECLARATION SHOULD BE JUST DATATYPES\n");
         errorExit(BAD_SYNTAX_ERR, token->line);
     }
 
@@ -1214,7 +1182,7 @@ void processDatatypesList(ast_node* funcDeclNode, FILE *f, DynamicString *dynami
     }
 }
 
-void processReturnDatatypesList(ast_node* funcDefNode, htab_list_t* hashTableList, FILE *f, DynamicString *dynamicString, StackTokens *tokenStack) /// DONE
+void processReturnDatatypesList(ast_node* funcDefNode, FILE *f, DynamicString *dynamicString, StackTokens *tokenStack) /// DONE
 {
     token_t* token = getToken(f, dynamicString, tokenStack);
     if(funcDefNode->hashTableItem->declareFlag == 1)
@@ -1224,7 +1192,7 @@ void processReturnDatatypesList(ast_node* funcDefNode, htab_list_t* hashTableLis
         {
             if(countOfRets >= funcDefNode->hashTableItem->countOfReturns)
             {
-                printf("BAD AMMOUNT OF RETURNS\n");
+               fprintf(stderr,"BAD AMMOUNT OF RETURNS\n");
                 errorExit(SEMANTIC_PARAM_COUNT_ERR,123);
             }
             switch (token->type)
@@ -1232,21 +1200,21 @@ void processReturnDatatypesList(ast_node* funcDefNode, htab_list_t* hashTableLis
                 case TOKEN_INT_KW:
                     if(funcDefNode->hashTableItem->funcReturns[countOfRets]->datatype != DATATYPE_INT)
                     {
-                        printf("BAD RETURN DATATYPE\n");
+                        fprintf(stderr,"BAD RETURN DATATYPE\n");
                         errorExit(SEMANTIC_PARAM_COUNT_ERR, 123);
                     }
                     break;
                 case TOKEN_NUM_KW:
                     if(funcDefNode->hashTableItem->funcReturns[countOfRets]->datatype != DATATYPE_NUM)
                     {
-                        printf("BAD RETURN DATATYPE\n");
+                       fprintf(stderr,"BAD RETURN DATATYPE\n");
                         errorExit(SEMANTIC_PARAM_COUNT_ERR, 123);
                     }
                     break;
                 case TOKEN_STR_KW:
                     if(funcDefNode->hashTableItem->funcReturns[countOfRets]->datatype != DATATYPE_STRING)
                     {
-                        printf("BAD RETURN DATATYPE\n");
+                       fprintf(stderr,"BAD RETURN DATATYPE\n");
                         errorExit(SEMANTIC_PARAM_COUNT_ERR, 123);
                     }
                     break;
@@ -1270,7 +1238,7 @@ void processReturnDatatypesList(ast_node* funcDefNode, htab_list_t* hashTableLis
                 ungetToken(token, tokenStack);
                 if(countOfRets < funcDefNode->hashTableItem->countOfReturns)
                 {
-                    printf("BAD AMMOUNT OF RETURNS\n");
+                   fprintf(stderr,"BAD AMMOUNT OF RETURNS\n");
                     errorExit(SEMANTIC_PARAM_COUNT_ERR,123);
                 }
                 return;
@@ -1337,7 +1305,7 @@ void processParametersList(ast_node* funcDefNode, htab_list_t* hashTableList, FI
         {
             if(counterArgs >= funcDefNode->hashTableItem->countOfArgs)
             {
-                printf("BAD AMMOUNT OF PARAMS\n");
+               fprintf(stderr,"BAD AMMOUNT OF PARAMS\n");
                 errorExit(SEMANTIC_PARAM_COUNT_ERR,123);
             }
             if(token->type == TOKEN_ID)
@@ -1363,7 +1331,7 @@ void processParametersList(ast_node* funcDefNode, htab_list_t* hashTableList, FI
                                 }
                                 else
                                 {
-                                    printf("CONFLICTING ARGUMENTS DATATYPES\n");
+                                   fprintf(stderr,"CONFLICTING ARGUMENTS DATATYPES\n");
                                     errorExit(SEMANTIC_PARAM_COUNT_ERR, 123);
                                 }
                                 break;
@@ -1379,7 +1347,7 @@ void processParametersList(ast_node* funcDefNode, htab_list_t* hashTableList, FI
                                 }
                                 else
                                 {
-                                    printf("CONFLICTING ARGUMENTS DATATYPES\n");
+                                   fprintf(stderr,"CONFLICTING ARGUMENTS DATATYPES\n");
                                     errorExit(SEMANTIC_PARAM_COUNT_ERR, 123);
                                 }
                                 break;
@@ -1395,7 +1363,7 @@ void processParametersList(ast_node* funcDefNode, htab_list_t* hashTableList, FI
                                 }
                                 else
                                 {
-                                    printf("CONFLICTING ARGUMENTS DATATYPES\n");
+                                   fprintf(stderr,"CONFLICTING ARGUMENTS DATATYPES\n");
                                     errorExit(SEMANTIC_PARAM_COUNT_ERR, 123);
                                 }
                                 break;
@@ -1439,7 +1407,7 @@ void processParametersList(ast_node* funcDefNode, htab_list_t* hashTableList, FI
         }
         if(counterArgs < funcDefNode->hashTableItem->countOfArgs-1)
         {
-            printf("BAD AMMOUNT OF PARAMS\n");
+           fprintf(stderr,"BAD AMMOUNT OF PARAMS\n");
             errorExit(SEMANTIC_PARAM_COUNT_ERR,123);
         }
     }
@@ -1540,7 +1508,7 @@ void processVoidFunctionCall(ast_node *ast, htab_list_t* hashTableList, FILE *f,
     }
     if(listSearch(hashTableList, token->data.tokenStringVal, FROM_FIRST)->countOfReturns != 0)
     {
-        printf("YOU ARE TRYING TO CALL NON-VOID FUNCTION\n");
+        fprintf(stderr,"YOU ARE TRYING TO CALL NON-VOID FUNCTION\n");
         errorExit(SEMANTIC_ANOTHER_ERR, 123);
     }
 
@@ -1552,7 +1520,7 @@ void processVoidFunctionCall(ast_node *ast, htab_list_t* hashTableList, FILE *f,
     token = getToken(f, dynamicString, tokenStack);
     if(token->type != TOKEN_L_BR)
     {
-        printf("ERROR void function call - no ( \n");
+        fprintf(stderr,"ERROR void function call - no ( \n");
         errorExit(BAD_SYNTAX_ERR, token->line);
     }
     token = getToken(f, dynamicString, tokenStack);
@@ -1578,7 +1546,6 @@ void processVoidFunctionCall(ast_node *ast, htab_list_t* hashTableList, FILE *f,
             case TOKEN_STR:
                 argumentNode->nodeType = NODE_STR_ARG;
                 argumentNode->nodeData.stringData = token->data.tokenStringVal;
-                printf("________________%s_________________\n", argumentNode->nodeData.stringData);
                 make_new_child(funcVoidFuncCall, argumentNode);
                 break;
             case TOKEN_ID:
@@ -1634,7 +1601,7 @@ void processFunctionDeclaration(ast_node *ast, htab_list_t* hashTableList, FILE 
     if(token->type != TOKEN_ID)
     {
         // ERROR
-        printf("ERROR function declaration - no function ID\n");
+       fprintf(stderr,"ERROR function declaration - no function ID\n");
         errorExit(BAD_SYNTAX_ERR, token->line);
     }
 
@@ -1643,7 +1610,7 @@ void processFunctionDeclaration(ast_node *ast, htab_list_t* hashTableList, FILE 
     if(htab_find(hashTableList->first->symtable, token->data.tokenStringVal))
     {
         //ERROR
-        printf("FUNCTION %s was already declared\n", token->data.tokenStringVal);
+        fprintf(stderr,"FUNCTION %s was already declared\n", token->data.tokenStringVal);
         errorExit(SEMANTIC_UNDEF_REDEF_ERR, token->line);
     }
 
@@ -1655,7 +1622,7 @@ void processFunctionDeclaration(ast_node *ast, htab_list_t* hashTableList, FILE 
     if(token->type != TOKEN_COLON)
     {
         // ERROR
-        printf("ERROR function declaration - no : \n");
+        fprintf(stderr,"ERROR function declaration - no : \n");
         errorExit(BAD_SYNTAX_ERR, token->line);
     }
     // get next token, should be function key word
@@ -1663,7 +1630,7 @@ void processFunctionDeclaration(ast_node *ast, htab_list_t* hashTableList, FILE 
     if(token->type != TOKEN_FUNC)
     {
         // ERROR
-        printf("ERROR function declaration - no function key word \n");
+        fprintf(stderr,"ERROR function declaration - no function key word \n");
         errorExit(BAD_SYNTAX_ERR, token->line);
     }
     // get next token, should be (
@@ -1671,7 +1638,7 @@ void processFunctionDeclaration(ast_node *ast, htab_list_t* hashTableList, FILE 
     if(token->type != TOKEN_L_BR)
     {
         // ERROR
-        printf("ERROR function declaration - no ( \n");
+        fprintf(stderr, "ERROR function declaration - no ( \n");
         errorExit(BAD_SYNTAX_ERR, token->line);
     }
 
@@ -1688,15 +1655,13 @@ void processFunctionDeclaration(ast_node *ast, htab_list_t* hashTableList, FILE 
     token = getToken(f, dynamicString, tokenStack);
     if(token->type != TOKEN_COLON)
     {
-        // // ERROR
-        // printf("ERROR function declaration - no : \n");
         ungetToken(token, tokenStack);
         funcDeclNode->hashTableItem->declareFlag = true;
         funcDeclNode->hashTableItem->defineFlag = false;
         return;
     }
     // process list of return datatypes 
-    processReturnDatatypesList(funcDeclNode, hashTableList, f, dynamicString, tokenStack);
+    processReturnDatatypesList(funcDeclNode, f, dynamicString, tokenStack);
     funcDeclNode->hashTableItem->declareFlag = true;
     funcDeclNode->hashTableItem->defineFlag = false;
 }
@@ -1710,11 +1675,10 @@ void processFunctionDefinition(ast_node *ast, htab_list_t *hashTableList, FILE *
     funcDefNode->nodeType = NODE_FUNC_DEF;
     //get next token, should be ID
     token_t *token = getToken(f, dynamicString, tokenStack);
-    printf("\n\n\n%s\n\n\n", token->data.tokenStringVal);
     if(token->type != TOKEN_ID)
     {
         // ERROR
-        printf("ERROR function definition - no function ID\n");
+        fprintf(stderr, "ERROR function definition - no function ID\n");
         errorExit(BAD_SYNTAX_ERR, token->line);
     }
 
@@ -1723,8 +1687,6 @@ void processFunctionDefinition(ast_node *ast, htab_list_t *hashTableList, FILE *
     if(htab_find(hashTableList->first->symtable,token->data.tokenStringVal) && 
        htab_find(hashTableList->first->symtable,token->data.tokenStringVal)->defineFlag)
     {
-        //TODO error code
-        printf("949");
         errorExit(SEMANTIC_UNDEF_REDEF_ERR, token->line);
     }
 
@@ -1739,7 +1701,8 @@ void processFunctionDefinition(ast_node *ast, htab_list_t *hashTableList, FILE *
     if(token->type != TOKEN_L_BR)
     {
         // ERROR
-        printf("ERROR function definition - no ( for arguments\n");
+        fprintf(stderr,"ERROR function definition - no ( for arguments\n");
+        errorExit(BAD_SYNTAX_ERR, token->line);
     }
 
     token = getToken(f, dynamicString, tokenStack);
@@ -1754,7 +1717,6 @@ void processFunctionDefinition(ast_node *ast, htab_list_t *hashTableList, FILE *
     }
     if(funcDefNode->hashTableItem->countOfArgs != 0 && flag)
     {
-        printf("ARE WE HERE???\n");
         errorExit(SEMANTIC_PARAM_COUNT_ERR,123);
     }
 
@@ -1763,13 +1725,12 @@ void processFunctionDefinition(ast_node *ast, htab_list_t *hashTableList, FILE *
     int flag1 = 1;
     if(token->type == TOKEN_COLON) // process list of return datatypes
     {
-        processReturnDatatypesList(funcDefNode, hashTableList, f, dynamicString, tokenStack);
+        processReturnDatatypesList(funcDefNode, f, dynamicString, tokenStack);
         flag1 = 0;
     }
     else ungetToken(token, tokenStack);
     if(funcDefNode->hashTableItem->countOfReturns != 0 && flag1)
     {
-        printf("HERE WE ARE???\n");
         errorExit(SEMANTIC_PARAM_COUNT_ERR,123);
     }
 
@@ -1783,14 +1744,12 @@ void processFunctionDefinition(ast_node *ast, htab_list_t *hashTableList, FILE *
     insertFirst(hashTableList, newItem);
     while(token->type != TOKEN_END)
     {
-        printf("1005: Process statement\n");
         ungetToken(token, tokenStack);
         processStatement(funcDefNode, hashTableList, f, dynamicString, tokenStack);
 
         token = getToken(f, dynamicString, tokenStack);
     }
 
-    //testScope(hashTableList);
 
     removeFirst(hashTableList); // whole function has been processed, we can remove first element of scope
 
@@ -1813,14 +1772,14 @@ void processProgramTemplate(ast_node *ast, htab_list_t *hashTableList, FILE *f, 
     if(token->type != TOKEN_REQ)
     {
         // ERROR
-        printf("ERROR not a require token\n");
+        fprintf(stderr,"ERROR not a require token\n");
         errorExit(BAD_SYNTAX_ERR, token->line);
     }
     token = getToken(f, dynamicString, tokenStack);
     if(token->type != TOKEN_STR || strcmp(token->data.tokenStringVal, "ifj21") !=0)
     {
         // ERROR
-        printf("ERROR not a \"ifj21\" token\n");
+        fprintf(stderr,"ERROR not a \"ifj21\" token\n");
         errorExit(BAD_SYNTAX_ERR, token->line);
     }
     // prolog part is OK!
@@ -1828,14 +1787,12 @@ void processProgramTemplate(ast_node *ast, htab_list_t *hashTableList, FILE *f, 
     token = getToken(f, dynamicString, tokenStack);
     while(token->type != TOKEN_EOF)
     {
-        printf("1065: token type %d(%s)\n", token->type, token->data.tokenStringVal);
         if(token->type == TOKEN_FUNC) // <functions> --> function id ( <list_of_parameters> ) : <list_of_datatypes> <list_of_statements> end
         {
             processFunctionDefinition(ast, hashTableList, f, dynamicString, tokenStack);
         }
         else if(token->type == TOKEN_GLOBAL) // <functions> --> global id : function ( <list_of_datatypes> ) : <list_of_datatypes>
         {
-            printf("1049: go to function declaration\n");
             processFunctionDeclaration(ast, hashTableList, f, dynamicString, tokenStack);
         }
         else if(token->type == TOKEN_ID) // <functions> --> id ( )
@@ -1846,7 +1803,7 @@ void processProgramTemplate(ast_node *ast, htab_list_t *hashTableList, FILE *f, 
         else // don't know this rule :(
         {
             //ERROR
-            printf("ERROR not a functions block\n");
+            fprintf(stderr,"ERROR not a functions block\n");
             errorExit(BAD_SYNTAX_ERR, token->line);
         }
         token = getToken(f, dynamicString, tokenStack);
@@ -1868,9 +1825,6 @@ ast_node *parseAST(htab_t *symTable, FILE *f)
     ast_node *ast = make_new_node();
     ast->nodeType = NODE_PROG;
     processProgramTemplate(ast, hashTableList, f, &dynamicString, &tokenStack);
-    printf("-----------------------------------------------\n");
-    testScope(hashTableList);
-    printf("-----------------------------------------------\n");
     return ast;
 }
 

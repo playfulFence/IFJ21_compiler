@@ -1,6 +1,12 @@
+// Authors : Maksim Naumenko(xnaume01)
+        //   Kirill Mikhailov(xmikha00)
+
+//Projekt: Implementace překladače imperativního jazyka IFJ21
+
+
 #include "parser.h"
 #include "scanner.h"
-#include "htab.h"
+#include "symtable.h"
 #include "dynamic_string.h"
 #include "tree.h"
 #include "stack_p_t.h"
@@ -22,7 +28,7 @@ void testScanner(FILE *f)
     {
         if((token->type == TOKEN_ID) || (token->type == TOKEN_STR))
         {
-            printf("[[TYPE: %10s || STRDATA: %10s  STRLEN: %10d]]\n", tokens[token->type], token->data.tokenStringVal);    
+            printf("[[TYPE: %10s || STRDATA: %10s]]\n", tokens[token->type], token->data.tokenStringVal);    
         }
         else if(token->type == TOKEN_INT)
         {
@@ -52,27 +58,14 @@ int main(int argc, char** argv)
     htab_t * symtable = htab_init(43969);
     // open file to read program
     FILE* prog = openFile(argc, argv);
-   // testScanner(prog);
+    
     //  // call parser to make abastract syntax tree
      ast_node *ast = parseAST(symtable, prog);
-     printf("GDFSDFSFDSfg\n");
      printAST(ast);
+
+    htab_clear(symtable);
     
     
-    // ast_node *ast = make_new_node();
-    // ast_node *child1 = make_new_node();
-    // make_new_child(ast, child1);
-    // ast_node *child2 = make_new_node();
-    // make_new_child(ast, child2);
-    // ast_node *child3 = make_new_node();
-    // make_new_child(child1, child3);
-    // // ast_node *child4 = make_new_node();
-    // // make_new_child(ast, child4);
-    // // ast_node *child5 = make_new_node();
-    // // make_new_child(child3, child5);
-    // //freeChildrenNodes(child3);
-    // printf("Проiбався\n");
-    // printAST(ast);
     
     fclose(prog);
     return 0;

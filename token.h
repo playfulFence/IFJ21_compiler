@@ -1,3 +1,9 @@
+// Authors : Maksim Naumenko(xnaume01)
+        //   Kirill Mikhailov(xmikha00)
+
+//Projekt: Implementace překladače imperativního jazyka IFJ21
+
+
 #ifndef __TOKEN_H__
 #define __TOKEN_H__
 

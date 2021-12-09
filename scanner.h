@@ -1,3 +1,10 @@
+// Authors : Maksim Naumenko(xnaume01)
+        //   Kirill Mikhailov(xmikha00)
+
+//Projekt: Implementace překladače imperativního jazyka IFJ21
+
+
+
 #ifndef __SCANNER_H__
 #define __SCANNER_H__
 

@@ -1,3 +1,9 @@
+//Author: Maksim Naumenko(xnaume01)
+
+
+//Projekt: Implementace překladače imperativního jazyka IFJ21
+
+
 #ifndef __DYNAMIC_STRING_H__
 #define  __DYNAMIC_STRING_H__
 

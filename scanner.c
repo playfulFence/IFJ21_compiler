@@ -1,11 +1,16 @@
+// Authors : Maksim Naumenko(xnaume01)
+        //   Kirill Mikhailov(xmikha00)
+
+//Projekt: Implementace překladače imperativního jazyka IFJ21
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include "scanner.h"
-#include "htab.h"
+#include "symtable.h"
 #include "error.h"
-
 
 tokenType_t keywordCheck(char* suspect)
 {
@@ -68,7 +73,7 @@ token_t *getToken(FILE *f, DynamicString *dynamicString, StackTokens *tokenStack
                     lineCounter++;
                     currentState = START_STATE;
                 } /* Kirill */
-                else if(isspace(symbol))
+                if(isspace(symbol))
                 {
                     // skip all whitespaces
                     currentState = START_STATE;

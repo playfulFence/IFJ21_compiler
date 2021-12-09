@@ -1,10 +1,15 @@
+
+// Authors : Maksim Naumenko(xnaume01)
+
+//Projekt: Implementace překladače imperativního jazyka IFJ21
+
 #ifndef __TREE_H__
 #define  __TREE_H__
 
 #include <stdio.h>
 #include <stdlib.h>
 #include "scanner.h"
-#include "htab.h"
+#include "symtable.h"
 
 typedef enum treeNodeTypes
 {

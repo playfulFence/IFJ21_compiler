@@ -1,3 +1,8 @@
+
+// Authors : Maksim Naumenko(xnaume01)
+
+//Projekt: Implementace překladače imperativního jazyka IFJ21
+
 #include "tree.h"
 
 char *nodes[] = {"[*]", "[/]", "[//]", "[+]", "[-]", "[..]", "[<]", "[<=]", "[>]", "[>=]", "==", "~=","ID","#","FUNC_DEF","FUNC_DEF_PARAM_LIST", "FUNC_DEF_RETURN_DATATYPES_LIST", "FUNC_VOID_CALL", "FUNC_CALL", "FUNC_CALL_PARAM_LIST", "FUNC_DECL", "FUNC_DECL_DATATYPES_LIST", "FUNC_DECL_RETURN_DATATYPES_LIST", "STATEMENTS_LIST", "STATEMENT", "IF", "IF_CONDITION", "IF_THEN", "IF_ELSE", "THEN", "ELSE", "WHILE", "WHILE_CONDITION", "WHILE_DO", "RETURN", "VAR_DEF", "SINGLE_ASSIGN", "IDS", "VALUES", "INT_ARG", "NUM_ARG", "STR_ARG", "NIL_ARG", "ZERO_ARG", "ID_ARG", "MULTIPLE_ASSIGN", "PROG", "NIL", "TRUE", "FALSE", "ID_INT", "ID_NUM", "ID_STR", "WRITE_CALL"};
@@ -35,39 +40,7 @@ void print_nodes(ast_node *ast, int indent)
     {   
         printf(" ");
     }
-    // if(ast->nodeType == NODE_ID || ast->nodeType == NODE_NIL_ARG)
-    // {
-    //     if(ast->hashTableItem->varIntVal != 0)
-    //     {
-    //         printf("%s(%d)\n", nodes[ast->nodeType], ast->hashTableItem->varIntVal);
-    //     }
-    //     else if(ast->hashTableItem->varIntVal != 0)
-    //     {
-    //         printf("%s(%f)\n", nodes[ast->nodeType], ast->hashTableItem->varNumVal);
-    //     }
-    //     else if(ast->nodeData.stringData != NULL)
-    //     {
-    //         char *ch = ast->nodeData.stringData;
-    //         printf("%s(%s)\n", nodes[ast->nodeType], ch);
-    //     }
-    // }
-    // else if(ast->nodeType == NODE_INT_ARG )
-    // {
-    //     printf("%s(%.2d)\n", nodes[ast->nodeType], ast->nodeData.intData);
-    // }
-    // else if (ast->nodeType == NODE_NUM_ARG)
-    // {
-    //     printf("%s(%.2f)\n", nodes[ast->nodeType], ast->nodeData.doubleData);
-    // }
-    // else if(ast->nodeType == NODE_STR_ARG)
-    // {
-    //     char *ch = "FHJFJGHFJ";
-    //     printf("---------%s(%s)\n", nodes[ast->nodeType], ch);
-    // }
-    //else
-  //  {
-        //printf("%s(%s)\n", nodes[ast->nodeType], ast->nodeData.stringData);
-//    }
+    
     if(ast->nodeType == NODE_INT_ARG)
     {
         printf("%s(%d)\n", nodes[ast->nodeType], ast->nodeData.intData);

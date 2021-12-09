@@ -1,3 +1,9 @@
+
+// Authors : Kirill Mikhailov(xmikha00)
+
+//Projekt: Implementace překladače imperativního jazyka IFJ21
+
+
 #ifndef __ERROR_LIB_H__
 #define __ERROR_LIB_H__
 

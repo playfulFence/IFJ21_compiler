@@ -1,3 +1,9 @@
+// Authors : Maksim Naumenko(xnaume01)
+        //   Kirill Mikhailov(xmikha00)
+
+//Projekt: Implementace překladače imperativního jazyka IFJ21
+
+
 #include "bottom_up_analysis.h"
 #include "string.h"
 #include "stdio.h"
@@ -174,39 +180,35 @@ void reduceByTheRule(NoneTerminal *topNoneTerminal, NoneTerminalStack *stackOfNo
 
 void shiftElement(token_t *expressionToken, NoneTerminal nextNoneTerminal, StackTokens *stackOfVaruables, NoneTerminalStack *stackOfNoneTerminals, htab_list_t *hashTableList, int flag)
 {
-    printf("FLAG %d\n", flag);
     pushNoneTerminalElement(stackOfNoneTerminals, nextNoneTerminal);
     if(expressionToken->type == TOKEN_STR || expressionToken->type == TOKEN_INT || expressionToken->type == TOKEN_NUM || expressionToken->type == TOKEN_ID || expressionToken->type == TOKEN_NIL)
     {
         if(expressionToken->type == TOKEN_ID)
         {
-            printf("Check if\n");
             if(!listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_FIRST)) //check if there is this variable 
             {
-                printf("Undefined variiable\n");
-                exit(11);
+                fprintf(stderr,"Undefined variiable\n");
+                errorExit(SEMANTIC_UNDEF_REDEF_ERR, 120);
             }
             else
             {
-                printf("QQQQQQQQQQQQQQQQ\n");
                 if(listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_FIRST)->type != TYPE_VARIABLE) // check if it's variable
                 {
-                    printf("NOT A VARIABLE\n");
-                    exit(11);
+                    fprintf(stderr,"NOT A VARIABLE\n");
+                    errorExit(SEMANTIC_ANOTHER_ERR, 120);
                 }
                 else
                 {
                     if(listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_FIRST)->defineFlag == 0) // check if variable is defined
                     {
-                        printf("RRRRRRRRRRRRRRRRRRRR\n");
                         if(listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_FIRST)->declareFlag == 0)
                         {
                             if(listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_SECOND)->defineFlag == 0) // check if variable is defined
                             {
                                 if(listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_SECOND)->declareFlag == 0) // check if variable is declared
                                 {
-                                    printf("VARIABLE IS UNDEFINED\n");
-                                    exit(11);
+                                    fprintf(stderr,"VARIABLE IS UNDEFINED\n");
+                                    errorExit(SEMANTIC_UNDEF_REDEF_ERR, 120);
                                 }
                                 else
                                 {
@@ -218,7 +220,6 @@ void shiftElement(token_t *expressionToken, NoneTerminal nextNoneTerminal, Stack
                             {
                                 if(!flag)
                                 {
-                                    printf("PRocess constant\n");
                                     switch (listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_SECOND)->datatype)
                                     {
                                     case DATATYPE_INT:
@@ -248,10 +249,8 @@ void shiftElement(token_t *expressionToken, NoneTerminal nextNoneTerminal, Stack
                     }
                     else // OK, it's variable 
                     {
-                        printf("RERERERERRERERERER\n");
                         if(!flag)
                         {
-                            printf("PRocess constant\n");
                             switch (listSearch(hashTableList, expressionToken->data.tokenStringVal, FROM_FIRST)->datatype)
                             {
                             case DATATYPE_INT:
@@ -300,12 +299,10 @@ void buildTreeFromRuleSequence(ast_node *node, DynamicString *ruleSequenceString
             node->nodeData.stringData = token->data.tokenStringVal;
             break;
         case TOKEN_NIL: 
-            printf("NODE: NIL\n");
             node->nodeType = NODE_NIL;
             node->nodeData.nilFlag = 0;
             break;
         case TOKEN_ID:
-            printf("NODE: ID\n");
             node->nodeType = NODE_ID;
             node->nodeData.stringData = token->data.tokenStringVal;
         default:
@@ -387,7 +384,7 @@ void expressionSemCheck(ast_node *leftOperand, ast_node *rightOperand, treeNodeT
     case NODE_STRLEN:
         if(leftOperand->nodeType != NODE_STR_ARG)
         {
-            printf("ERROR: strlen, should be string argument");
+            fprintf(stderr,"ERROR: strlen, should be string argument");
             errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 123);
         }
         break;
@@ -410,7 +407,7 @@ void expressionSemCheck(ast_node *leftOperand, ast_node *rightOperand, treeNodeT
         }
         if (leftOperand->nodeType == NODE_STR_ARG || rightOperand->nodeType == NODE_STR_ARG || leftOperand->nodeType == NODE_NIL || rightOperand->nodeType == NODE_NIL)
         {
-            printf("ERROR: +|-|/|*, has string as operand");
+            fprintf(stderr,"ERROR: +|-|/|*, has string as operand");
             errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 123);
         }
         if(operatorType == NODE_DIV)
@@ -428,7 +425,7 @@ void expressionSemCheck(ast_node *leftOperand, ast_node *rightOperand, treeNodeT
     case NODE_INTDIV:
         if (leftOperand->nodeType != NODE_INT_ARG || rightOperand->nodeType != NODE_INT_ARG)
         {
-            printf("ERROR: //, should have two integer operands");
+            fprintf(stderr,"ERROR: //, should have two integer operands");
             errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 123);
         }
         if((rightOperand->nodeData.intData == 0 && rightOperand->nodeData.doubleData != 0) ||
@@ -441,7 +438,7 @@ void expressionSemCheck(ast_node *leftOperand, ast_node *rightOperand, treeNodeT
     case NODE_CONC:
         if (leftOperand->nodeType != NODE_STR_ARG || rightOperand->nodeType != NODE_STR_ARG)
         {
-            printf("ERROR: cancatenation, should has two string operands");
+            fprintf(stderr,"ERROR: cancatenation, should has two string operands");
             errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 123);
         }
         break;
@@ -451,12 +448,12 @@ void expressionSemCheck(ast_node *leftOperand, ast_node *rightOperand, treeNodeT
     case NODE_GEQ:
         if((leftOperand->nodeType == NODE_STR_ARG && rightOperand->nodeType != NODE_STR_ARG) || (leftOperand->nodeType != NODE_STR_ARG && rightOperand->nodeType == NODE_STR_ARG))
         {
-            printf("ERROR: <|<=|>|>=, if one operand is string second must be string too");
+            fprintf(stderr,"ERROR: <|<=|>|>=, if one operand is string second must be string too");
             errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 123);
         }
         if((leftOperand->nodeType == NODE_INT_ARG && rightOperand->nodeType == NODE_STR_ARG) || (leftOperand->nodeType == NODE_NUM_ARG && rightOperand->nodeType == NODE_STR_ARG))
         {
-            printf("ERROR: <|<=|>|>=, if one operand is int/num second must be int/num too");
+            fprintf(stderr,"ERROR: <|<=|>|>=, if one operand is int/num second must be int/num too");
             errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 123);
         }
         break;
@@ -467,12 +464,12 @@ void expressionSemCheck(ast_node *leftOperand, ast_node *rightOperand, treeNodeT
         {
             if((leftOperand->nodeType == NODE_STR_ARG && rightOperand->nodeType != NODE_STR_ARG) || (leftOperand->nodeType != NODE_STR_ARG && rightOperand->nodeType == NODE_STR_ARG))
             {
-                printf("ERROR: <|<=|>|>=, if one operand is string second must be string too");
+               fprintf(stderr,"ERROR: <|<=|>|>=, if one operand is string second must be string too");
                 errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 123);
             }
             else if((leftOperand->nodeType == NODE_INT_ARG && rightOperand->nodeType == NODE_STR_ARG) || (leftOperand->nodeType == NODE_NUM_ARG && rightOperand->nodeType == NODE_STR_ARG))
             {
-                printf("ERROR: <|<=|>|>=, if one operand is int/num second must be int/num too");
+                fprintf(stderr,"ERROR: <|<=|>|>=, if one operand is int/num second must be int/num too");
                 errorExit(SEMANTIC_IN_EXPRESSION_TYPES_ERR, 123);
             }
         }
@@ -484,7 +481,6 @@ void expressionSemCheck(ast_node *leftOperand, ast_node *rightOperand, treeNodeT
 
 void processNode(ast_node *node)
 {
-    printf("PROCESS NODE\n");
     switch (node->nodeType)
     {
     case NODE_STRLEN:
@@ -615,7 +611,7 @@ void processNode(ast_node *node)
         break;
     case NODE_CONC:
         expressionSemCheck(node->childrenNodes[0], node->childrenNodes[1], NODE_CONC);
-        //node->nodeData.stringData = strcat(node->childrenNodes[0]->nodeData.stringData, node->childrenNodes[1]->nodeData.stringData);
+
         node->nodeData.stringData = malloc(sizeof(char)*(strlen(node->childrenNodes[0]->nodeData.stringData)+strlen(node->childrenNodes[1]->nodeData.stringData))); 
         strcat(node->nodeData.stringData, node->childrenNodes[0]->nodeData.stringData);
         strcat(node->nodeData.stringData, node->childrenNodes[1]->nodeData.stringData);
@@ -1043,11 +1039,8 @@ void processNode(ast_node *node)
 
 void simplifyTheTree(ast_node *node)
 {
-    printf("TEST2\n");
-    printf("NODE: %d\n", node->nodeType);
     if(node->nodeType == NODE_INT_ARG || node->nodeType == NODE_NUM_ARG || node->nodeType == NODE_STR_ARG || node->nodeType == NODE_NIL)
     {
-        printf("NODE: %d", node->nodeType);
         return;
     }
     else if(node->nodeType == NODE_STRLEN)
@@ -1102,18 +1095,15 @@ ast_node *bottomUpAnalysis(htab_list_t* hashTableList, FILE *f, DynamicString *d
                 }
                 else
                 {
-                    printf("error");
-                    exit(1);
+                    errorExit(BAD_SYNTAX_ERR, 120);
                 }
                 break;
             
             case 1: // reduce by the rule
-                printf("Make reduce!!! Top is: %d\n", topNoneTerminal);
                 reduceByTheRule(&topNoneTerminal, &stackOfNoneTerminals, &ruleSequenceString);
                 continue;
 
             case 2: // shift 
-                printf("Make shift!!! Top is: %d\n", topNoneTerminal);
                 shiftElement(expressionToken, nextNoneTerminal, &stackOfVariables, &stackOfNoneTerminals, hashTableList, flag);
                 topNoneTerminal = stackOfNoneTerminals.top->element;
                 break;
@@ -1128,19 +1118,14 @@ ast_node *bottomUpAnalysis(htab_list_t* hashTableList, FILE *f, DynamicString *d
         expressionToken = getToken(f, dynamicString, tokenStack);
         nextNoneTerminal = transformTokenToNoneTerminal(expressionToken->type, expressionToken, hashTableList, &stackOfNoneTerminals);
     }
-    printf("Rule sequence is ready\n");
     // reversed rule sequence string 
     DynamicString reversedRuleSequenceString;
     DynamicStringInit(&reversedRuleSequenceString);
     DynamicStringReverse(&ruleSequenceString, &reversedRuleSequenceString);
     //printDynamicString(&ruleSequenceString);
     DynamicStringDispose(&ruleSequenceString);
-    printDynamicString(&reversedRuleSequenceString);
     ast_node *expressionTree = make_new_node();
-    printf("Be ready to build a tree\n");
     buildTreeFromRuleSequence(expressionTree, &reversedRuleSequenceString, &stackOfVariables);
-    printf("TRee is built\n");
-    printAST(expressionTree);
     
     if(flag)
     {
@@ -1148,8 +1133,6 @@ ast_node *bottomUpAnalysis(htab_list_t* hashTableList, FILE *f, DynamicString *d
     }
     
     simplifyTheTree(expressionTree);
-    printf("TEST\n");
-    printAST(expressionTree);
     return expressionTree;
 }
 
